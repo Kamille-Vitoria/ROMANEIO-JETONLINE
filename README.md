@@ -17,18 +17,18 @@ src/
   engine.js          Motor puro (sem DOM): normalização de identificadores,
                      leitura do relatório, resolução de bipagem, mesclagem
                      incremental de importações, exclusão lógica, conciliação
-                     e exportação. Usado tanto pelo app quanto pelos testes.
+                     e exportação. Usado tanto pelo app quanto pelos testees.
   app.template.html  Interface, telas, armazenamento e fluxos. Contém o
                      marcador /*__ENGINE__*/ onde o conteúdo de engine.js é
                      injetado para gerar o index.html final.
-test/
-  test.js               Testes do motor (identificação de etiquetas, chave de
+teste/
+  teste.js               testees do motor (identificação de etiquetas, chave de
                          acesso da NFe, ambiguidade).
   e2e.js                Fluxo completo em DOM headless: importar, bipar,
                          conciliar, filtrar, exportar.
-  test-fechamento.js    Múltiplas importações, fechamento e reabertura de
+  teste-fechamento.js    Múltiplas importações, fechamento e reabertura de
                          romaneio.
-  test-exclusoes.js     Exclusão lógica de importação/bipagem/romaneio,
+  teste-exclusoes.js     Exclusão lógica de importação/bipagem/romaneio,
                          operadores, alerta de pedido já bipado em romaneio
                          anterior.
 ```
@@ -43,18 +43,18 @@ open('index.html', 'w').write(tpl.replace('/*__ENGINE__*/', eng))
 PY
 ```
 
-## Como rodar os testes
+## Como rodar os testees
 
-Os testes usam um relatório de exemplo (.xls) que **não está neste repositório**
+Os testees usam um relatório de exemplo (.xls) que **não está neste repositório**
 porque relatórios reais contêm dados pessoais de clientes (nome, CPF, endereço).
 Para rodar localmente, aponte para o seu próprio arquivo no mesmo formato
 (colunas: Número, Destinatário, Endereço, Bairro, CEP, Cidade, Etiqueta, Nº PLP,
 Serviço):
 
 ```bash
-cd test
+cd testee
 npm install
-REPORT_PATH=/caminho/para/seu-relatorio.xls npm test
+REPORT_PATH=/caminho/para/seu-relatorio.xls npm teste
 ```
 
 ## Publicar / hospedar

@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Romaneio de Expedição</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --paper:#F1F2F0; --panel:#FFFFFF; --ink:#16191D; --ink-2:#5A6067; --ink-3:#878D94;
+  --line:#D9DCD8; --line-2:#C2C7C1;
+  --steel:#1E2428; --steel-2:#2C343A; --steel-ink:#E8EAE7;
+  --ok:#0B7A3B; --ok-soft:#E3F3E8; --ok-line:#9CCFB0;
+  --dup:#C0221C; --dup-soft:#FBE6E4; --dup-line:#E9A6A1;
+  --warn:#9A6206; --warn-soft:#FCF1D8; --warn-line:#E2C476;
+  --idle:#6B7280; --idle-soft:#EDEEEC;
+  --focus:#1D64D8;
+  --r:3px;
+  --shadow:0 1px 0 rgba(0,0,0,.04);
+  color-scheme:light;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111417; --panel:#181C20; --ink:#E9EBE8; --ink-2:#A2A9AE; --ink-3:#7C838A;
+    --line:#2A3036; --line-2:#3A424A;
+    --steel:#0C0F11; --steel-2:#1A1F23; --steel-ink:#E9EBE8;
+    --ok:#3FBE72; --ok-soft:#10301E; --ok-line:#2C6B45;
+    --dup:#FF6B60; --dup-soft:#3A1512; --dup-line:#7E2E27;
+    --warn:#E9B44C; --warn-soft:#332608; --warn-line:#6E551B;
+    --idle:#8B9299; --idle-soft:#1F2429;
+    --focus:#6BA0FF;
+    --shadow:none;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111417; --panel:#181C20; --ink:#E9EBE8; --ink-2:#A2A9AE; --ink-3:#7C838A;
+  --line:#2A3036; --line-2:#3A424A;
+  --steel:#0C0F11; --steel-2:#1A1F23; --steel-ink:#E9EBE8;
+  --ok:#3FBE72; --ok-soft:#10301E; --ok-line:#2C6B45;
+  --dup:#FF6B60; --dup-soft:#3A1512; --dup-line:#7E2E27;
+  --warn:#E9B44C; --warn-soft:#332608; --warn-line:#6E551B;
+  --idle:#8B9299; --idle-soft:#1F2429;
+  --focus:#6BA0FF;
+  --shadow:none;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+code,kbd,.mono,.code{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- shell ---------- */
+.app{display:flex; min-height:100vh}
+.rail{
+  width:216px; flex:0 0 216px; background:var(--steel); color:var(--steel-ink);
+  display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+}
+.brand{padding:18px 18px 14px; border-bottom:1px solid rgba(255,255,255,.08)}
+.brand b{display:block; font-size:15px; font-weight:600; letter-spacing:-.01em}
+.brand span{display:block; font-size:11.5px; color:#9AA3AA; margin-top:2px}
+.nav{padding:10px 8px; display:flex; flex-direction:column; gap:2px}
+.nav button{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:none; border:0; border-radius:var(--r); padding:9px 10px;
+  color:#C3C9CE; font-size:13.5px; font-weight:500;
+}
+.nav button:hover{background:var(--steel-2); color:#fff}
+.nav button[aria-current="true"]{background:var(--steel-2); color:#fff; box-shadow:inset 2px 0 0 var(--ok)}
+.nav .dot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.55;flex:0 0 8px}
+.rail-foot{margin-top:auto; padding:12px; border-top:1px solid rgba(255,255,255,.08); font-size:11.5px; color:#8C959C}
+.rail-foot .row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}
+.rail-foot button{background:var(--steel-2);border:1px solid rgba(255,255,255,.1);color:#C3C9CE;border-radius:var(--r);padding:3px 8px;font-size:11px}
+.main{flex:1; min-width:0; display:flex; flex-direction:column}
+.topbar{
+  display:flex; align-items:center; gap:14px; padding:12px 22px; background:var(--panel);
+  border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20;
+}
+.topbar h1{margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em}
+.topbar .meta{font-size:12.5px; color:var(--ink-2)}
+.topbar .spacer{flex:1}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-2);
+  border:1px solid var(--line); border-radius:999px; padding:3px 9px; background:var(--panel);
+}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--idle);display:inline-block}
+.pill.on i{background:var(--ok)}
+.pill.off i{background:var(--warn)}
+.view{padding:20px 22px 40px; max-width:1500px; width:100%}
+.hidden{display:none!important}
+
+/* ---------- generic ---------- */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+.panel-h{padding:11px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px}
+.panel-h h2{margin:0; font-size:13.5px; font-weight:600}
+.panel-h .spacer{flex:1}
+.panel-b{padding:14px}
+.hint{font-size:12.5px; color:var(--ink-2)}
+.btn{
+  border:1px solid var(--line-2); background:var(--panel); color:var(--ink);
+  border-radius:var(--r); padding:7px 13px; font-size:13px; font-weight:500;
+}
+.btn:hover{border-color:var(--ink-3)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.primary{background:var(--steel); border-color:var(--steel); color:#fff}
+.btn.primary:hover{background:var(--steel-2)}
+.btn.danger{color:var(--dup); border-color:var(--dup-line)}
+.btn.sm{padding:4px 9px; font-size:12px}
+.grid{display:grid; gap:14px}
+table{border-collapse:collapse; width:100%; font-size:12.5px}
+th{
+  text-align:left; font-weight:600; color:var(--ink-2); font-size:11.5px;
+  padding:7px 10px; border-bottom:1px solid var(--line-2); background:var(--panel);
+  position:sticky; top:0; white-space:nowrap;
+}
+td{padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+tbody tr:hover{background:var(--idle-soft)}
+.tbl-wrap{max-height:62vh; overflow:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--panel)}
+.tag{display:inline-block; font-size:11px; font-weight:600; padding:2px 7px; border-radius:999px; border:1px solid}
+.tag.ok{color:var(--ok); background:var(--ok-soft); border-color:var(--ok-line)}
+.tag.dup{color:var(--dup); background:var(--dup-soft); border-color:var(--dup-line)}
+.tag.warn{color:var(--warn); background:var(--warn-soft); border-color:var(--warn-line)}
+.tag.idle{color:var(--ink-2); background:var(--idle-soft); border-color:var(--line-2)}
+
+/* ---------- bipagem ---------- */
+.scan-layout{display:grid; grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr); gap:16px; align-items:start}
+.scanbox{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+.scan-input-row{display:flex; align-items:center; gap:0; border-bottom:1px solid var(--line)}
+.scan-input-row label{
+  padding:0 14px; font-size:12px; color:var(--ink-2); border-right:1px solid var(--line);
+  align-self:stretch; display:flex; align-items:center; white-space:nowrap;
+}
+#scanInput{
+  flex:1; min-width:0; border:0; background:transparent; padding:16px 14px;
+  font-family:"IBM Plex Mono",monospace; font-size:21px; letter-spacing:.02em;
+}
+#scanInput::placeholder{color:var(--ink-3); letter-spacing:0}
+#scanInput:focus{outline:none; background:var(--ok-soft)}
+:root[data-theme="dark"] #scanInput:focus{background:rgba(63,190,114,.08)}
+
+.verdict{padding:0; min-height:290px; display:flex; flex-direction:column; justify-content:center}
+.verdict-inner{padding:20px 22px}
+.v-idle{background:var(--panel)}
+.v-ok{background:var(--ok-soft)}
+.v-dup{background:var(--dup-soft)}
+.v-warn{background:var(--warn-soft)}
+.v-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.v-title{font-size:30px; font-weight:700; letter-spacing:-.02em; line-height:1.1; margin:0}
+.v-ok .v-title{color:var(--ok)} .v-dup .v-title{color:var(--dup)} .v-warn .v-title{color:var(--warn)}
+.v-idle .v-title{color:var(--ink-3); font-weight:600; font-size:22px}
+.v-sub{font-size:13px; color:var(--ink-2)}
+.v-nf{
+  font-family:"IBM Plex Mono",monospace; font-size:58px; font-weight:600; line-height:1;
+  letter-spacing:-.02em; margin:12px 0 4px;
+}
+.v-fields{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px 18px; margin-top:14px}
+.v-fields dt{font-size:11px; color:var(--ink-2); margin-bottom:1px}
+.v-fields dd{margin:0; font-size:13.5px; font-weight:500; word-break:break-word}
+.v-fields dd.code{font-size:13px; font-weight:400}
+.v-flash{animation:flash .45s ease-out}
+@keyframes flash{from{filter:brightness(1.22)}to{filter:none}}
+
+.counters{display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--line)}
+.counter{background:var(--panel); padding:11px 13px}
+.counter .n{font-family:"IBM Plex Mono",monospace; font-size:26px; font-weight:600; line-height:1.1}
+.counter .l{font-size:11.5px; color:var(--ink-2); margin-top:2px}
+.counter.ok .n{color:var(--ok)} .counter.dup .n{color:var(--dup)} .counter.warn .n{color:var(--warn)}
+.progress-wrap{padding:13px}
+.progress-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px}
+.progress-top b{font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600}
+.bar{height:16px; background:var(--idle-soft); border:1px solid var(--line-2); border-radius:2px; overflow:hidden}
+.bar > i{display:block; height:100%; background:var(--ok); transition:width .25s ease}
+.bar-ascii{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-2); margin-top:6px; letter-spacing:-.5px; overflow:hidden; white-space:nowrap}
+
+.feed{max-height:330px; overflow:auto}
+.feed-item{display:flex; gap:10px; padding:8px 13px; border-bottom:1px solid var(--line); font-size:12.5px}
+.feed-item .t{font-family:"IBM Plex Mono",monospace; color:var(--ink-3); font-size:11.5px; padding-top:1px}
+.feed-item .c{flex:1; min-width:0}
+.feed-item .c b{font-weight:600}
+.feed-item .code{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-2); display:block; overflow:hidden; text-overflow:ellipsis}
+.feed-item.ok{box-shadow:inset 3px 0 0 var(--ok)}
+.feed-item.dup{box-shadow:inset 3px 0 0 var(--dup)}
+.feed-item.warn{box-shadow:inset 3px 0 0 var(--warn)}
+
+.ambig{border:2px solid var(--warn); background:var(--warn-soft); border-radius:var(--r); padding:14px; margin-bottom:14px}
+.ambig h3{margin:0 0 4px; font-size:16px; color:var(--warn)}
+.ambig .opts{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+.ambig .opt{border:1px solid var(--warn-line); background:var(--panel); border-radius:var(--r); padding:8px 11px; text-align:left}
+.ambig .opt b{display:block; font-family:"IBM Plex Mono",monospace}
+
+/* ---------- import ---------- */
+.drop{
+  border:2px dashed var(--line-2); border-radius:var(--r); padding:34px 20px; text-align:center;
+  background:var(--panel);
+}
+.drop.hot{border-color:var(--ok); background:var(--ok-soft)}
+.drop h3{margin:0 0 6px; font-size:16px}
+.filters{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px}
+.filters input,.filters select{
+  border:1px solid var(--line-2); background:var(--panel); border-radius:var(--r); padding:6px 9px; font-size:12.5px;
+}
+.filters input{min-width:170px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:12.5px}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0; font-weight:500}
+.alert{border:1px solid var(--warn-line); background:var(--warn-soft); color:var(--warn); border-radius:var(--r); padding:10px 12px; font-size:12.5px; margin-bottom:12px}
+.alert.bad{border-color:var(--dup-line); background:var(--dup-soft); color:var(--dup)}
+.alert b{display:block; margin-bottom:2px}
+.empty{padding:40px 20px; text-align:center; color:var(--ink-2); font-size:13px}
+.toast{
+  position:fixed; right:18px; bottom:18px; z-index:60; background:var(--steel); color:#fff;
+  padding:10px 14px; border-radius:var(--r); font-size:13px; max-width:340px; box-shadow:0 6px 20px rgba(0,0,0,.25)
+}
+
+/* ---------- estado do romaneio ---------- */
+.statusbadge{
+  display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+  border-radius:999px; padding:4px 11px; border:1px solid;
+}
+.statusbadge.aberto{color:var(--ok); background:var(--ok-soft); border-color:var(--ok-line)}
+.statusbadge.fechado{color:var(--ink-2); background:var(--idle-soft); border-color:var(--line-2)}
+.lockbar{
+  display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  border:1px solid var(--line-2); background:var(--idle-soft); border-radius:var(--r);
+  padding:11px 13px; margin-bottom:14px; font-size:12.5px;
+}
+.lockbar b{font-size:13.5px}
+.dash-meta{display:flex; gap:14px; flex-wrap:wrap; padding:10px 13px; border-top:1px solid var(--line); font-size:12px; color:var(--ink-2)}
+.dash-meta b{color:var(--ink); font-weight:600}
+
+/* ---------- operador ---------- */
+.operbox{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--ink-2)}
+.operbox select{border:1px solid var(--line-2); background:var(--panel); border-radius:var(--r); padding:4px 8px; font-size:12.5px; max-width:180px}
+.operbox.vazio select{border-color:var(--warn); background:var(--warn-soft)}
+.rowbtn{border:0;background:none;padding:2px 5px;border-radius:3px;font-size:13px;line-height:1;color:var(--ink-2)}
+.rowbtn:hover{background:var(--dup-soft);color:var(--dup)}
+.excluida{opacity:.55}
+.excluida .arq,.excluida .c{text-decoration:line-through}
+.aviso-anterior{border:1px solid var(--warn-line); background:var(--warn-soft); border-radius:var(--r); padding:9px 11px; margin-top:12px; font-size:12.5px}
+.aviso-anterior b{display:block; color:var(--warn); font-size:13px; margin-bottom:3px}
+
+/* ---------- modal ---------- */
+.modal-bg{position:fixed; inset:0; background:rgba(12,15,17,.55); z-index:80; display:flex; align-items:center; justify-content:center; padding:20px}
+.modal{background:var(--panel); border:1px solid var(--line-2); border-radius:var(--r); max-width:520px; width:100%; max-height:90vh; overflow:auto}
+.modal h2{margin:0; font-size:17px; padding:15px 18px; border-bottom:1px solid var(--line)}
+.modal .body{padding:16px 18px}
+.modal .foot{padding:13px 18px; border-top:1px solid var(--line); display:flex; gap:9px; justify-content:flex-end; flex-wrap:wrap}
+.modal .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin:12px 0}
+.modal .nums div{background:var(--panel); padding:9px 11px}
+.modal .nums .n{font-family:"IBM Plex Mono",monospace; font-size:21px; font-weight:600}
+.modal .nums .l{font-size:11px; color:var(--ink-2)}
+.modal label.check{display:flex; gap:9px; align-items:flex-start; font-size:12.5px; margin-top:12px; cursor:pointer}
+
+/* ---------- destino da importação ---------- */
+.destino{display:grid; gap:9px; margin:4px 0 12px}
+.destino label{
+  display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line-2);
+  border-radius:var(--r); padding:11px 13px; cursor:pointer; background:var(--panel);
+}
+.destino label.sel{border-color:var(--ok); background:var(--ok-soft)}
+.destino b{display:block; font-size:13.5px}
+.destino span{font-size:12.5px; color:var(--ink-2)}
+.destino select{margin-top:8px; border:1px solid var(--line-2); background:var(--panel); border-radius:var(--r); padding:6px 9px; font-size:12.5px; width:100%; max-width:380px}
+.imp-row{display:flex; gap:12px; padding:9px 13px; border-bottom:1px solid var(--line); font-size:12.5px; align-items:baseline}
+.imp-row .num{font-family:"IBM Plex Mono",monospace; font-weight:600; min-width:34px}
+.imp-row .arq{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.imp-row .nums{color:var(--ink-2); white-space:nowrap}
+
+@media (max-width:1040px){
+  .scan-layout{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .app{flex-direction:column}
+  .rail{width:100%; flex:none; height:auto; position:static; flex-direction:column}
+  .nav{flex-direction:row; overflow-x:auto; padding:8px}
+  .nav button{white-space:nowrap}
+  .rail-foot{display:none}
+  .view{padding:14px}
+  .v-nf{font-size:42px}
+  .v-title{font-size:24px}
+  .counters{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <b>Romaneio de Expedição</b>
+      <span id="brandSub">Nenhum romaneio aberto</span>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="import"><span class="dot"></span>Importar romaneio</button>
+      <button data-view="scan"><span class="dot"></span>Expedição / Bipagem</button>
+      <button data-view="concil"><span class="dot"></span>Conciliação</button>
+      <button data-view="hist"><span class="dot"></span>Histórico</button>
+      <button data-view="oper"><span class="dot"></span>Operadores</button>
+    </nav>
+    <div class="rail-foot">
+      <div class="row"><span>Estação</span><button id="btnEstacao">trocar</button></div>
+      <div class="row"><b id="estacaoNome" style="color:#E8EAE7">—</b></div>
+      <div class="row"><span>Responsável</span><button id="btnUsuario">trocar</button></div>
+      <div class="row"><b id="usuarioNome" style="color:#E8EAE7">—</b></div>
+      <div class="row"><span>Som da bipagem</span><button id="btnSom">ligado</button></div>
+      <div class="row"><span>Tema</span><button id="btnTema">auto</button></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1 id="viewTitle">Importar romaneio</h1>
+      <span class="meta" id="viewMeta"></span>
+      <span class="spacer"></span>
+      <label class="operbox"><span>Operador</span><select id="selOperador"><option value="">selecionar…</option></select></label>
+      <span class="statusbadge hidden" id="romStatus"></span>
+      <button class="btn sm hidden" id="btnFechar">🔒 Fechar romaneio</button>
+      <button class="btn sm hidden" id="btnReabrir">Reabrir romaneio</button>
+      <span class="pill" id="storePill"><i></i><span>verificando armazenamento…</span></span>
+    </header>
+
+    <!-- ================= IMPORTAR ================= -->
+    <section class="view" id="view-import">
+      <div class="grid" style="grid-template-columns:minmax(0,1fr)">
+        <div class="panel">
+          <div class="panel-h"><h2>Arquivo de notas fiscais do dia</h2></div>
+          <div class="panel-b">
+            <div class="drop" id="drop">
+              <h3>Arraste o relatório aqui</h3>
+              <p class="hint" style="margin:0 0 14px">Planilhas .xls e .xlsx. O sistema lê as colunas sozinho e preserva o conteúdo original de cada linha.</p>
+              <button class="btn primary" id="btnPick">Escolher arquivo</button>
+              <input type="file" id="file" accept=".xls,.xlsx,.xlsm,.csv" class="hidden">
+            </div>
+            <div id="importResult"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BIPAGEM ================= -->
+    <section class="view hidden" id="view-scan">
+      <div id="scanNoRom" class="alert hidden"><b>Nenhum romaneio aberto</b>Importe o relatório do dia ou abra um romaneio no histórico antes de bipar.</div>
+      <div id="lockBar"></div>
+      <div id="ambigBox"></div>
+      <div class="scan-layout">
+        <div>
+          <div class="scanbox">
+            <div class="scan-input-row">
+              <label for="scanInput">Bipe a etiqueta<br><span class="hint" style="font-size:11px">operador: <b id="operadorScan">não identificado</b></span></label>
+              <input id="scanInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="aguardando leitura…">
+            </div>
+            <div class="verdict v-idle" id="verdict">
+              <div class="verdict-inner">
+                <div class="v-head"><h2 class="v-title">Pronto para bipar</h2></div>
+                <p class="v-sub" id="vIdleSub">O cursor fica no campo acima o tempo todo. Bipe a etiqueta e o leitor envia o Enter sozinho.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:14px">
+            <div class="panel-h"><h2>Últimas bipagens</h2><span class="spacer"></span><span class="hint" id="feedCount"></span></div>
+            <div class="feed" id="feed"><div class="empty">Nenhuma bipagem registrada nesta estação.</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="panel">
+            <div class="panel-h"><h2>Expedição de hoje</h2></div>
+            <div class="counters" id="counters"></div>
+            <div class="progress-wrap">
+              <div class="progress-top"><span class="hint">Concluído</span><b id="pctTxt">0%</b></div>
+              <div class="bar"><i id="bar" style="width:0%"></i></div>
+              <div class="bar-ascii" id="barAscii"></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:14px">
+            <div class="panel-h"><h2>Ocorrências</h2></div>
+            <div id="ocorrencias"><div class="empty">Sem ocorrências.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CONCILIAÇÃO ================= -->
+    <section class="view hidden" id="view-concil">
+      <div id="concilNoRom" class="alert hidden"><b>Nenhum romaneio aberto</b>Importe o relatório do dia para conciliar.</div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-bottom:14px">
+        <div class="panel">
+          <div class="panel-h"><h2>Histórico de importações</h2><span class="spacer"></span><span class="hint" id="impCount"></span></div>
+          <div id="impList"><div class="empty">Nenhuma importação registrada.</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>Auditoria do romaneio</h2></div>
+          <div id="audList" style="max-height:260px;overflow:auto"><div class="empty">Sem registros.</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h">
+          <h2>Conciliação do romaneio</h2>
+          <span class="spacer"></span>
+          <button class="btn sm" id="btnCopiarPend">Copiar pendentes</button>
+          <button class="btn primary sm" id="btnExport">Exportar romaneio</button>
+        </div>
+        <div class="panel-b">
+          <div class="filters">
+            <select id="fStatus">
+              <option value="">Todos os status</option>
+              <option value="EMBALADO">Embalado</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="DUPLICADO">Com duplicidade</option>
+              <option value="NAO_PERTENCE">Não pertencente ao romaneio</option>
+              <option value="AMBIGUO">Ambíguo</option>
+            </select>
+            <input id="fTexto" placeholder="NF, pedido, cliente, etiqueta…">
+            <select id="fTransp"><option value="">Todas as transportadoras</option></select>
+            <select id="fServ"><option value="">Todos os serviços</option></select>
+            <input id="fData" type="date" title="Data da bipagem">
+            <input id="fHoraDe" type="time" title="Bipado a partir de" style="min-width:auto">
+            <input id="fHoraAte" type="time" title="Bipado até" style="min-width:auto">
+            <button class="btn sm" id="btnLimparF">Limpar</button>
+            <span class="hint" id="filtroInfo"></span>
+          </div>
+          <div class="tbl-wrap">
+            <table id="tblConcil">
+              <thead><tr>
+                <th>Status</th><th>NF</th><th>Série</th><th>Pedido</th><th>Cliente</th>
+                <th>Etiqueta / rastreio</th><th>Serviço</th><th>Transportadora</th>
+                <th>Bipagem</th><th>Estação</th><th>Observação</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= OPERADORES ================= -->
+    <section class="view hidden" id="view-oper">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+        <div class="panel">
+          <div class="panel-h"><h2>Operadores</h2></div>
+          <div class="panel-b">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              <input id="novoOperador" placeholder="Nome do operador" style="flex:1;min-width:180px;border:1px solid var(--line-2);background:var(--panel);border-radius:3px;padding:7px 9px">
+              <button class="btn primary" id="btnAddOperador">Cadastrar</button>
+            </div>
+            <div class="tbl-wrap" style="max-height:none">
+              <table id="tblOper"><thead><tr><th>Nome</th><th>Status</th><th>Cadastrado em</th><th></th></tr></thead><tbody></tbody></table>
+            </div>
+            <p class="hint" style="margin:12px 0 0">O operador identificado fica registrado em cada bipagem, importação, exclusão, fechamento e reabertura. Operadores inativos somem da seleção mas continuam nos registros antigos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HISTÓRICO ================= -->
+    <section class="view hidden" id="view-hist">
+      <div class="panel">
+        <div class="panel-h"><h2>Romaneios</h2><span class="spacer"></span><button class="btn sm" id="btnReload">Atualizar</button></div>
+        <div class="panel-b" style="padding-bottom:0">
+          <div class="filters">
+            <input id="hDe" type="date" title="Período de">
+            <input id="hAte" type="date" title="Período até">
+            <select id="hStatus"><option value="">Todos os status</option><option value="ABERTO">🟢 Aberto</option><option value="FECHADO">🔴 Fechado</option></select>
+            <select id="hOper"><option value="">Todos os operadores</option></select>
+            <input id="hBusca" placeholder="Nome ou nº do romaneio">
+            <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="hExcluidos"> mostrar excluídos (auditoria)</label>
+            <button class="btn sm" id="btnLimparH">Limpar</button>
+            <span class="hint" id="histInfo"></span>
+          </div>
+        </div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table id="tblHist">
+            <thead><tr>
+              <th>Data</th><th>Status</th><th>Romaneio</th><th>Pedidos</th><th>Bipados</th>
+              <th>Pendentes</th><th>Duplicidades</th><th>Fora do romaneio</th><th>Conclusão</th>
+              <th>Importações</th><th>Abertura</th><th>Fechamento</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ===================== MOTOR (validado em teste) ===================== */
+/*__ENGINE__*/
+/* ===================== APLICAÇÃO ===================== */
+(function(){
+'use strict';
+
+/* localStorage protegido: em alguns navegadores/modos ele lança exceção.
+   A variável abaixo sombreia a global dentro de todo o aplicativo. */
+var localStorage = (function(){
+  try{
+    var ls = window.localStorage;
+    ls.setItem('__rom_t','1'); ls.removeItem('__rom_t');
+    return {
+      getItem:function(k){ try{ return ls.getItem(k); }catch(e){ return null; } },
+      setItem:function(k,v){ try{ ls.setItem(k,v); }catch(e){} },
+      removeItem:function(k){ try{ ls.removeItem(k); }catch(e){} }
+    };
+  }catch(e){
+    var mem = {};
+    return {
+      getItem:function(k){ return Object.prototype.hasOwnProperty.call(mem,k) ? mem[k] : null; },
+      setItem:function(k,v){ mem[k] = String(v); },
+      removeItem:function(k){ delete mem[k]; }
+    };
+  }
+})();
+
+var E = Engine;
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+/* ---------- estado ---------- */
+var S = {
+  view:'import',
+  romaneio:null,        // metadados do romaneio aberto
+  orders:[], idx:{},
+  events:[],            // eventos de todas as estações (mesclados)
+  meus:[],              // eventos desta estação (documento próprio)
+  rec:null,
+  estacao: localStorage.getItem('rom.estacao') || '',
+  som: localStorage.getItem('rom.som') !== '0',
+  tema: localStorage.getItem('rom.tema') || 'auto',
+  importacoes:[],       // fotografias de relatório já aplicadas ao romaneio
+  auditoria:[],         // trilha append-only do romaneio aberto
+  minhaAuditoria:[],    // parte da trilha gravada por esta sessão
+  usuario: localStorage.getItem('rom.usuario') || '',
+  operadores:[],                                  // cadastro simples
+  operador: localStorage.getItem('rom.operador') || '',
+  histIndex:{},                                   // bipagens ativas de romaneios anteriores
+  lista:[],             // histórico
+  ambiguo:null,
+  pendingImport:null,
+  unsub:null
+};
+var docId = 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function nowISO(){ return new Date().toISOString(); }
+function hhmmss(ts){ if(!ts) return ''; var d=new Date(ts); return isNaN(d)?'':d.toLocaleTimeString('pt-BR',{hour12:false}); }
+function ddmmyyyy(ts){ if(!ts) return ''; var d=new Date(ts); return isNaN(d)?'':d.toLocaleDateString('pt-BR'); }
+function toast(msg, ms){
+  var t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, ms||3200);
+}
+
+/* ---------- som ---------- */
+var actx=null;
+function beep(kind){
+  if(!S.som) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    var seq = kind==='ok' ? [[880,.09]] : kind==='dup' ? [[300,.13],[220,.20]] : [[500,.10],[380,.16]];
+    var t0 = actx.currentTime;
+    seq.forEach(function(s,i){
+      var o=actx.createOscillator(), g=actx.createGain();
+      o.type='square'; o.frequency.value=s[0];
+      g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(.18,t0+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+s[1]);
+      o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0+s[1]+.02);
+      t0 += s[1]+.03;
+    });
+  }catch(e){}
+}
+
+/* =====================================================================
+   ARMAZENAMENTO — db do artefato quando disponível, senão navegador
+   ===================================================================== */
+var Store = (function(){
+  var db=null, mode='local', ready=false;
+  var LS = {
+    list:function(){ try{ return JSON.parse(localStorage.getItem('rom.index')||'[]'); }catch(e){ return []; } },
+    saveList:function(l){ localStorage.setItem('rom.index', JSON.stringify(l)); },
+    get:function(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } },
+    set:function(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+  };
+
+  function chunk(arr,n){ var out=[]; for(var i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; }
+
+  var api = {
+    get mode(){ return mode; },
+    get ready(){ return ready; },
+
+    init: function(){
+      var timeout = new Promise(function(res){ setTimeout(function(){ res(null); }, 5000); });
+      var use = (window.claude && window.claude.use) ? window.claude.use('db') : Promise.resolve(null);
+      return Promise.race([use, timeout]).then(function(d){
+        if(d){
+          return d.collection('romaneios').limit(1).get().then(function(){
+            db=d; mode='db'; ready=true; return mode;
+          }).catch(function(){ mode='local'; ready=true; return mode; });
+        }
+        mode='local'; ready=true; return mode;
+      }).catch(function(){ mode='local'; ready=true; return mode; });
+    },
+
+    listRomaneios: function(){
+      if(mode==='db'){
+        return db.collection('romaneios').orderBy('criadoEm','desc').limit(200).get()
+          .then(function(sn){ return sn.docs.map(function(d){ return d.data(); }); });
+      }
+      return Promise.resolve(LS.list().slice().sort(function(a,b){ return a.criadoEm<b.criadoEm?1:-1; }));
+    },
+
+    createRomaneio: function(meta, orders){
+      if(mode==='db'){
+        var parts = chunk(orders, 120);
+        var p = db.doc('romaneios/'+meta.id).set(meta);
+        parts.forEach(function(part,i){
+          p = p.then(function(){ return db.doc('romaneios/'+meta.id+'/pedidos/c'+i).set({ chunk:i, itens:part }); });
+        });
+        return p.then(function(){ return meta; });
+      }
+      var l = LS.list(); l.push(meta); LS.saveList(l);
+      LS.set('rom.'+meta.id+'.pedidos', orders);
+      LS.set('rom.'+meta.id+'.bip', {});
+      return Promise.resolve(meta);
+    },
+
+    // Reescreve os blocos de pedidos do romaneio consolidado (união, nunca substituição)
+    saveOrders: function(id, orders){
+      if(mode==='db'){
+        var parts = chunk(orders, 120);
+        var p = Promise.resolve();
+        parts.forEach(function(part,i){
+          p = p.then(function(){ return db.doc('romaneios/'+id+'/pedidos/c'+i).set({ chunk:i, itens:part }); });
+        });
+        return p;
+      }
+      LS.set('rom.'+id+'.pedidos', orders);
+      return Promise.resolve();
+    },
+
+    addImportacao: function(id, imp){
+      if(mode==='db') return db.doc('romaneios/'+id+'/importacoes/i'+imp.numero).set(imp);
+      var l = LS.get('rom.'+id+'.imps')||[]; l.push(imp); LS.set('rom.'+id+'.imps', l);
+      return Promise.resolve();
+    },
+
+    listImportacoes: function(id){
+      if(mode==='db'){
+        return db.collection('romaneios/'+id+'/importacoes').get().then(function(sn){
+          return sn.docs.map(function(d){ return d.data(); })
+            .sort(function(a,b){ return (a.numero||0)-(b.numero||0); });
+        });
+      }
+      return Promise.resolve(LS.get('rom.'+id+'.imps')||[]);
+    },
+
+    // auditoria: documento próprio por sessão, somente acrescentado
+    saveAudit: function(id, itens){
+      if(mode==='db') return db.doc('romaneios/'+id+'/auditoria/a'+docId).set({ sessao:docId, itens:itens });
+      var all = LS.get('rom.'+id+'.aud')||{}; all[docId]=itens; LS.set('rom.'+id+'.aud', all);
+      return Promise.resolve();
+    },
+
+    listAudit: function(id){
+      if(mode==='db'){
+        return db.collection('romaneios/'+id+'/auditoria').get().then(function(sn){
+          var out=[]; sn.docs.forEach(function(d){ out = out.concat((d.data()||{}).itens||[]); }); return out;
+        });
+      }
+      var all = LS.get('rom.'+id+'.aud')||{};
+      var out=[]; Object.keys(all).forEach(function(k){ out = out.concat(all[k]||[]); });
+      return Promise.resolve(out);
+    },
+
+    loadOperadores: function(){
+      if(mode==='db'){
+        return db.doc('config/operadores').get().then(function(sn){
+          return sn.exists ? ((sn.data()||{}).lista||[]) : [];
+        }).catch(function(){ return []; });
+      }
+      return Promise.resolve(LS.get('rom.operadores')||[]);
+    },
+
+    saveOperadores: function(lista){
+      if(mode==='db') return db.doc('config/operadores').set({ lista:lista, atualizadoEm:nowISO() });
+      LS.set('rom.operadores', lista);
+      return Promise.resolve();
+    },
+
+    // leitura avulsa das bipagens de um romaneio (usada no índice de romaneios anteriores)
+    loadEvents: function(id){
+      if(mode==='db'){
+        return db.collection('romaneios/'+id+'/bipagens').get().then(function(sn){
+          var out=[]; sn.docs.forEach(function(d){ out = out.concat((d.data()||{}).itens||[]); }); return out;
+        }).catch(function(){ return []; });
+      }
+      var all = LS.get('rom.'+id+'.bip')||{};
+      var out=[]; Object.keys(all).forEach(function(k){ out = out.concat(all[k]||[]); });
+      return Promise.resolve(out);
+    },
+
+    updateImportacao: function(id, imp){
+      if(mode==='db') return db.doc('romaneios/'+id+'/importacoes/i'+imp.numero).set(imp);
+      var l = LS.get('rom.'+id+'.imps')||[];
+      l = l.map(function(x){ return x.numero===imp.numero ? imp : x; });
+      LS.set('rom.'+id+'.imps', l);
+      return Promise.resolve();
+    },
+
+    // substitui o documento de bipagens de UMA estação (usado na exclusão lógica)
+    saveEventsOf: function(id, sessao, estacao, itens){
+      if(mode==='db') return db.doc('romaneios/'+id+'/bipagens/'+sessao).set({ estacao:estacao, atualizadoEm:nowISO(), itens:itens });
+      var all = LS.get('rom.'+id+'.bip')||{};
+      all[sessao] = itens;
+      LS.set('rom.'+id+'.bip', all);
+      return Promise.resolve();
+    },
+
+    updateMeta: function(id, patch){
+      if(mode==='db') return db.doc('romaneios/'+id).update(patch).catch(function(){});
+      var l=LS.list(); l.forEach(function(m){ if(m.id===id) Object.assign(m,patch); }); LS.saveList(l);
+      return Promise.resolve();
+    },
+
+    loadOrders: function(id){
+      if(mode==='db'){
+        return db.collection('romaneios/'+id+'/pedidos').get().then(function(sn){
+          var parts = sn.docs.map(function(d){ return d.data(); })
+            .sort(function(a,b){ return (a.chunk||0)-(b.chunk||0); });
+          return parts.reduce(function(a,p){ return a.concat(p.itens||[]); }, []);
+        });
+      }
+      return Promise.resolve(LS.get('rom.'+id+'.pedidos')||[]);
+    },
+
+    // Assina as bipagens de todas as estações. cb(eventos[])
+    subscribe: function(id, cb){
+      if(mode==='db'){
+        return db.collection('romaneios/'+id+'/bipagens').onSnapshot(function(sn){
+          var evs=[];
+          sn.docs.forEach(function(d){ var x=d.data()||{}; evs = evs.concat(x.itens||[]); });
+          cb(evs);
+        }, function(){ /* assinatura encerrada; o estado local continua válido */ });
+      }
+      var read = function(){
+        var all = LS.get('rom.'+id+'.bip')||{};
+        var evs=[]; Object.keys(all).forEach(function(k){ evs=evs.concat(all[k]||[]); });
+        cb(evs);
+      };
+      read();
+      var h = function(e){ if(e.key==='rom.'+id+'.bip') read(); };
+      window.addEventListener('storage', h);
+      return function(){ window.removeEventListener('storage', h); };
+    },
+
+    // Grava (substitui) o documento de bipagens desta estação. Chamado em série.
+    saveMyEvents: function(id, estacao, itens){
+      if(mode==='db'){
+        return db.doc('romaneios/'+id+'/bipagens/'+docId).set({ estacao:estacao, atualizadoEm:nowISO(), itens:itens });
+      }
+      var all = LS.get('rom.'+id+'.bip')||{};
+      all[docId] = itens;
+      LS.set('rom.'+id+'.bip', all);
+      return Promise.resolve();
+    }
+  };
+  return api;
+})();
+
+/* fila de gravação: uma escrita por vez, agrupando rajadas de bipagem */
+var writer = { timer:null, busy:false, dirty:false };
+function scheduleSave(){
+  if(!S.romaneio) return;
+  writer.dirty = true;
+  if(writer.timer) return;
+  writer.timer = setTimeout(flushSave, 400);
+}
+function flushSave(){
+  writer.timer = null;
+  if(writer.busy || !S.romaneio){ return; }
+  if(!writer.dirty) return;
+  writer.dirty = false; writer.busy = true;
+  var rid = S.romaneio.id;
+  Store.saveMyEvents(rid, S.estacao, S.meus).catch(function(err){
+    writer.dirty = true;
+    toast('Falha ao gravar a bipagem. Tentando de novo…');
+  }).then(function(){
+    writer.busy = false;
+    if(writer.dirty && !writer.timer) writer.timer = setTimeout(flushSave, 600);
+    atualizarResumoRomaneio();
+  });
+}
+
+/* =====================================================================
+   ESTADO DO ROMANEIO, AUDITORIA E PROTEÇÃO
+   Ponto único por onde passam todas as escritas.
+   ===================================================================== */
+function estaFechado(rom){
+  var r = rom || S.romaneio;
+  return !!(r && r.status === 'FECHADO');
+}
+
+function patchMeta(patch){
+  if(!S.romaneio) return Promise.resolve();
+  Object.keys(patch).forEach(function(k){ S.romaneio[k] = patch[k]; });
+  S.lista.forEach(function(m){ if(m.id===S.romaneio.id) Object.keys(patch).forEach(function(k){ m[k]=patch[k]; }); });
+  return Store.updateMeta(S.romaneio.id, patch);
+}
+
+function registrarAuditoria(tipo, detalhe, extra){
+  if(!S.romaneio) return Promise.resolve();
+  var ev = Object.assign({
+    id: docId+'-a'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    ts: nowISO(), tipo: tipo, detalhe: detalhe || '',
+    usuario: S.usuario || S.estacao || '', estacao: S.estacao || ''
+  }, extra||{});
+  S.minhaAuditoria.push(ev);
+  S.auditoria.push(ev);
+  renderAuditoria();
+  return Store.saveAudit(S.romaneio.id, S.minhaAuditoria).catch(function(){});
+}
+
+/* =====================================================================
+   IMPORTAÇÃO
+   ===================================================================== */
+function lerArquivo(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data = new Uint8Array(e.target.result);
+    var wb;
+    try{
+      wb = XLSX.read(data, { type:'array', cellDates:false, raw:true });
+    }catch(err){
+      $('#importResult').innerHTML = '<div class="alert bad"><b>Não foi possível ler o arquivo</b>'+esc(err.message||String(err))+'</div>';
+      return;
+    }
+    var sheet = wb.Sheets[wb.SheetNames[0]];
+    var matrix = XLSX.utils.sheet_to_json(sheet, { header:1, raw:true, defval:'' });
+    var parsed = E.parseMatrix(matrix);
+    if(!parsed.ok){
+      $('#importResult').innerHTML = '<div class="alert bad"><b>Relatório não reconhecido</b>'+esc(parsed.error)+'</div>';
+      return;
+    }
+    parsed.arquivo = file.name;
+    mostrarPreviaImportacao(parsed);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function fingerprint(orders, arquivo){
+  var nfs = orders.map(function(o){ return o.nf || o.etiqueta; }).sort().join(',');
+  var h = 0;
+  for(var i=0;i<nfs.length;i++){ h = ((h<<5)-h + nfs.charCodeAt(i))|0; }
+  return orders.length + '-' + (h>>>0).toString(36);
+}
+
+function mostrarPreviaImportacao(p){
+  S.pendingImport = p;
+  S.impDestino = null;
+  S.impRomaneioId = '';
+  S.mergePreview = null;
+  S.forcarNovos = {};
+
+  var porTransp = {}, porServ = {};
+  p.orders.forEach(function(o){
+    porTransp[o.transportadora] = (porTransp[o.transportadora]||0)+1;
+    porServ[o.servico||'—'] = (porServ[o.servico||'—']||0)+1;
+  });
+  p.fingerprint = fingerprint(p.orders, p.arquivo);
+  var hoje = new Date().toISOString().slice(0,10);
+
+  var html = '';
+  p.warnings.forEach(function(w){ html += '<div class="alert">'+esc(w)+'</div>'; });
+
+  html += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:14px">'+
+    '<div class="panel"><div class="panel-h"><h2>O que foi lido</h2></div><div class="panel-b"><dl class="kv">'+
+      '<dt>Arquivo</dt><dd>'+esc(p.arquivo)+'</dd>'+
+      '<dt>Pedidos no arquivo</dt><dd>'+p.orders.length+'</dd>'+
+      '<dt>Cabeçalho</dt><dd>linha '+(p.headerRow+1)+'</dd>'+
+      '<dt>Colunas usadas</dt><dd>'+esc(Object.keys(p.map).join(', '))+'</dd>'+
+    '</dl></div></div>'+
+    '<div class="panel"><div class="panel-h"><h2>Transportadoras</h2></div><div class="panel-b"><dl class="kv">'+
+      Object.keys(porTransp).map(function(k){ return '<dt>'+esc(k)+'</dt><dd>'+porTransp[k]+'</dd>'; }).join('')+
+    '</dl></div></div>'+
+    '<div class="panel"><div class="panel-h"><h2>Serviços</h2></div><div class="panel-b"><dl class="kv">'+
+      Object.keys(porServ).map(function(k){ return '<dt>'+esc(k)+'</dt><dd>'+porServ[k]+'</dd>'; }).join('')+
+    '</dl></div></div>'+
+  '</div>';
+
+  html += '<div class="panel" style="margin-top:14px"><div class="panel-h"><h2>Como deseja importar este relatório?</h2></div>'+
+    '<div class="panel-b"><div id="destinoBox"></div>'+
+    '<div id="mergeBox"></div>'+
+    '<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px">'+
+      '<button class="btn" id="btnCancelImport">Cancelar</button>'+
+      '<span style="flex:1"></span>'+
+      '<button class="btn primary" id="btnConfirmImport" disabled>Escolha o destino</button>'+
+    '</div></div></div>';
+
+  html += '<div class="panel" style="margin-top:14px"><div class="panel-h"><h2>Pedidos do arquivo</h2>'+
+    '<span class="spacer"></span><span class="hint">fotografia das NFs no momento da geração</span></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>#</th><th>NF</th><th>Cliente</th><th>Cidade</th>'+
+    '<th>Etiqueta</th><th>Pedido</th><th>Serviço</th><th>Chaves de busca</th></tr></thead><tbody>'+
+    p.orders.map(function(o){
+      return '<tr><td>'+o.seq+'</td><td class="code">'+esc(o.nfRaw||o.nf)+'</td><td>'+esc(o.cliente)+'</td>'+
+        '<td>'+esc(o.cidade)+'</td><td class="code">'+esc(o.etiquetaRaw)+'</td><td class="code">'+esc(o.pedido)+'</td>'+
+        '<td>'+esc(o.servico)+'</td><td class="hint">'+esc(o.keys.filter(function(k){return k.type!=='ANY';}).map(function(k){return k.type;}).join(', '))+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+
+  $('#importResult').innerHTML = html;
+  S.impHoje = hoje;
+  renderDestino();
+  $('#btnCancelImport').onclick = cancelarImportacao;
+  $('#btnConfirmImport').onclick = confirmarImportacao;
+}
+
+function cancelarImportacao(){
+  S.pendingImport = null; S.mergePreview = null; S.impDestino = null;
+  $('#importResult').innerHTML = '';
+  $('#file').value = '';
+  toast('Importação cancelada. Nada foi alterado.');
+}
+
+function renderDestino(){
+  var p = S.pendingImport;
+  if(!p) return;
+  var abertos = S.lista.filter(function(m){ return m.status !== 'FECHADO'; });
+  var fechados = S.lista.filter(function(m){ return m.status === 'FECHADO'; });
+  var mesmoArquivo = S.lista.filter(function(m){ return m.fingerprint === p.fingerprint; })[0];
+
+  var box = $('#destinoBox');
+  var html = '';
+  if(mesmoArquivo){
+    html += '<div class="alert"><b>Este mesmo arquivo já foi importado</b>'+
+      'O romaneio <b>'+esc(mesmoArquivo.nome)+'</b> recebeu um relatório idêntico em '+esc(ddmmyyyy(mesmoArquivo.criadoEm))+'. '+
+      'Se for uma atualização do dia, escolha adicionar ao romaneio existente: pedidos repetidos não entram duas vezes.</div>';
+  }
+
+  html += '<div class="destino">'+
+    '<label class="'+(S.impDestino==='novo'?'sel':'')+'" data-d="novo">'+
+      '<input type="radio" name="dest" '+(S.impDestino==='novo'?'checked':'')+'>'+
+      '<div style="flex:1"><b>Criar novo romaneio</b><span>Um romaneio independente para este relatório.</span>'+
+      (S.impDestino==='novo' ?
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:9px">'+
+        '<label class="hint">Data <input id="impData" type="date" value="'+S.impHoje+'" style="border:1px solid var(--line-2);background:var(--panel);border-radius:3px;padding:5px 8px;margin-left:6px"></label>'+
+        '<label class="hint">Nome <input id="impNome" value="Romaneio '+new Date().toLocaleDateString('pt-BR')+'" style="border:1px solid var(--line-2);background:var(--panel);border-radius:3px;padding:5px 8px;margin-left:6px;min-width:200px"></label>'+
+        '</div>' : '')+
+      '</div></label>'+
+    '<label class="'+(S.impDestino==='add'?'sel':'')+'" data-d="add">'+
+      '<input type="radio" name="dest" '+(S.impDestino==='add'?'checked':'')+' '+(abertos.length?'':'disabled')+'>'+
+      '<div style="flex:1"><b>Adicionar ao romaneio existente</b>'+
+      '<span>'+(abertos.length
+        ? 'Os pedidos novos entram como pendentes; os que já estão no romaneio ficam intactos, com a bipagem preservada.'
+        : 'Nenhum romaneio aberto no momento.'+(fechados.length?' Romaneios fechados não aceitam importação — reabra antes.':''))+'</span>'+
+      (S.impDestino==='add' ?
+        '<select id="impRomaneio">'+abertos.map(function(m){
+          return '<option value="'+esc(m.id)+'"'+(S.impRomaneioId===m.id?' selected':'')+'>'+esc(m.nome)+' · '+(m.totalPedidos||0)+' pedidos · '+(m.qtdImportacoes||1)+' importação(ões)</option>';
+        }).join('')+'</select>' : '')+
+      '</div></label>'+
+  '</div>';
+  box.innerHTML = html;
+
+  box.querySelectorAll('.destino label').forEach(function(l){
+    l.onclick = function(e){
+      if(e.target.closest('input[type=date],input[type=text],select,input:not([type=radio])')) return;
+      var d = l.getAttribute('data-d');
+      if(d==='add' && !abertos.length){ toast('Não há romaneio aberto para receber este relatório.'); return; }
+      S.impDestino = d;
+      if(d==='add' && !S.impRomaneioId) S.impRomaneioId = abertos[0].id;
+      renderDestino();
+      if(d==='add') carregarMergePreview();
+      else { S.mergePreview=null; $('#mergeBox').innerHTML=''; atualizarBotaoImportar(); }
+    };
+  });
+  var sel = $('#impRomaneio');
+  if(sel) sel.onchange = function(){ S.impRomaneioId = sel.value; carregarMergePreview(); };
+  atualizarBotaoImportar();
+}
+
+function atualizarBotaoImportar(){
+  var b = $('#btnConfirmImport');
+  if(!b) return;
+  if(S.impDestino==='novo'){
+    b.disabled = false; b.textContent = 'Criar romaneio com ' + S.pendingImport.orders.length + ' pedidos';
+  }else if(S.impDestino==='add'){
+    if(!S.mergePreview){ b.disabled = true; b.textContent = 'Comparando com o romaneio…'; return; }
+    var r = S.mergePreview.res.resumo;
+    b.disabled = false;
+    b.textContent = r.novos ? ('Adicionar ' + r.novos + ' pedido(s) novo(s)') : 'Registrar importação (nenhum pedido novo)';
+  }else{
+    b.disabled = true; b.textContent = 'Escolha o destino';
+  }
+}
+
+// O nº da importação é sempre o próximo da sequência, mesmo com exclusões no meio.
+function proximoNumeroImportacao(meta){
+  var maior = 0;
+  (S.impsDoAlvo||[]).forEach(function(i){ maior = Math.max(maior, i.numero||0); });
+  return Math.max(maior, meta.qtdImportacoes||0) + 1;
+}
+
+function calcularMerge(){
+  var mp = S.mergePreview;
+  if(!mp) return;
+  mp.res = E.mergeOrders(mp.orders, S.pendingImport.orders, {
+    imp: proximoNumeroImportacao(mp.meta),
+    ts: nowISO(),
+    seqBase: (mp.todos||mp.orders).reduce(function(m,o){ return Math.max(m, o.seq||0); }, 0),
+    forcarNovos: Object.keys(S.forcarNovos).filter(function(k){ return S.forcarNovos[k]; })
+  });
+  renderMergePreview();
+  atualizarBotaoImportar();
+}
+
+function carregarMergePreview(){
+  var id = S.impRomaneioId;
+  var meta = S.lista.filter(function(m){ return m.id===id; })[0];
+  if(!meta) return;
+  $('#mergeBox').innerHTML = '<div class="hint" style="margin-top:10px">Comparando com os pedidos já consolidados…</div>';
+  atualizarBotaoImportar();
+  Promise.all([Store.loadOrders(id), Store.listImportacoes(id)]).then(function(par){
+    if(S.impRomaneioId !== id) return;
+    S.impsDoAlvo = par[1]||[];
+    // só a composição ativa participa da comparação
+    S.mergePreview = { id:id, meta:meta, orders:(par[0]||[]).filter(function(o){ return o.ativo!==false; }),
+      todos:(par[0]||[]) };
+    calcularMerge();
+  });
+}
+
+function renderMergePreview(){
+  var mp = S.mergePreview;
+  if(!mp){ $('#mergeBox').innerHTML=''; return; }
+  var r = mp.res.resumo;
+  var html = '<div class="modal-nums nums" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:12px 0">'+
+    numBox(r.encontrados, 'No arquivo') +
+    numBox(r.jaExistentes, 'Já no romaneio') +
+    numBox(r.novos, 'Novos a adicionar') +
+    numBox(mp.orders.length, 'Romaneio antes') +
+    numBox(r.totalDepois, 'Romaneio depois') +
+  '</div>';
+
+  html += '<div class="hint">Nenhum pedido existente é substituído e nada é removido: pedidos que sumiram deste relatório continuam no romaneio.</div>';
+
+  if(mp.res.conflitos.length){
+    html += '<div class="alert" style="margin-top:12px"><b>Possível pedido duplicado. É necessária conferência.</b>'+
+      mp.res.conflitos.length+' registro(s) do arquivo casaram com mais de um pedido do romaneio. '+
+      'Por segurança eles não entram automaticamente. Marque os que forem, de fato, pedidos diferentes.</div>'+
+      '<div class="panel" style="margin-top:8px"><div class="tbl-wrap" style="max-height:240px"><table>'+
+      '<thead><tr><th>Adicionar</th><th>NF</th><th>Cliente</th><th>Etiqueta</th><th>Casa com</th></tr></thead><tbody>'+
+      mp.res.conflitos.map(function(c){
+        var k = c.recebido.nf || c.recebido.etiqueta;
+        var cands = c.candidatos.map(function(id){
+          var o = mp.orders.filter(function(x){ return x.id===id; })[0];
+          return o ? ('NF '+(o.nfRaw||o.nf)) : id;
+        }).join(', ');
+        return '<tr><td><input type="checkbox" data-conf="'+esc(k)+'"'+(S.forcarNovos[k]?' checked':'')+'></td>'+
+          '<td class="code">'+esc(c.recebido.nfRaw||c.recebido.nf)+'</td><td>'+esc(c.recebido.cliente)+'</td>'+
+          '<td class="code">'+esc(c.recebido.etiquetaRaw)+'</td><td class="hint">'+esc(cands)+'</td></tr>';
+      }).join('')+'</tbody></table></div></div>';
+  }
+
+  $('#mergeBox').innerHTML = html;
+  $('#mergeBox').querySelectorAll('[data-conf]').forEach(function(cb){
+    cb.onchange = function(){ S.forcarNovos[cb.getAttribute('data-conf')] = cb.checked; calcularMerge(); };
+  });
+}
+
+function numBox(n, l){
+  return '<div style="background:var(--panel);padding:9px 11px"><div class="n" style="font-family:\'IBM Plex Mono\',monospace;font-size:21px;font-weight:600">'+n+'</div><div class="l" style="font-size:11px;color:var(--ink-2)">'+l+'</div></div>';
+}
+
+function confirmarImportacao(){
+  var p = S.pendingImport;
+  if(!p) return;
+  if(!exigirOperador('importar um relatório')) return;
+  $('#btnConfirmImport').disabled = true;
+
+  if(S.impDestino === 'novo'){
+    var ts = nowISO();
+    var orders = p.orders.map(function(o){
+      var c={}; Object.keys(o).forEach(function(k){c[k]=o[k];});
+      c.imp=1; c.imps=[1]; c.ativo=true; c.entrouEm=ts; return c;
+    });
+    var meta = {
+      id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      nome: ($('#impNome')&&$('#impNome').value.trim()) || ('Romaneio ' + new Date().toLocaleDateString('pt-BR')),
+      dataReferencia: (($('#impData')&&$('#impData').value)||'').split('-').reverse().join('/'),
+      arquivo: p.arquivo,
+      criadoEm: ts, abertoEm: ts, atualizadoEm: ts,
+      status: 'ABERTO', fechadoEm:'', fechadoPor:'', reaberturas:0,
+      criadoPor: S.operador, excluido:false,
+      totalPedidos: orders.length, qtdImportacoes: 1,
+      fingerprint: p.fingerprint, avisos: p.warnings, mapa: p.map,
+      resumo: { embalados:0, pendentes:orders.length, duplicados:0, naoPertencentes:0, percentual:0 }
+    };
+    Store.createRomaneio(meta, orders).then(function(){
+      return Store.addImportacao(meta.id, {
+        numero:1, ts:ts, arquivo:p.arquivo, encontrados:orders.length, novos:orders.length,
+        jaExistentes:0, conflitos:0, status:'ATIVA',
+        usuario:S.operador||'', operador:S.operador||'', estacao:S.estacao||''
+      });
+    }).then(function(){
+      S.pendingImport=null; $('#importResult').innerHTML=''; $('#file').value='';
+      return carregarLista().then(function(){ return abrirRomaneio(meta.id); });
+    }).then(function(){
+      registrarAuditoria('CRIACAO', 'Romaneio criado com ' + meta.totalPedidos + ' pedidos');
+      registrarAuditoria('IMPORTACAO', 'Importação #1 · ' + p.arquivo + ' · ' + meta.totalPedidos + ' pedidos encontrados, ' + meta.totalPedidos + ' novos');
+      setView('scan');
+      toast('Romaneio criado com ' + meta.totalPedidos + ' pedidos.');
+    }).catch(function(err){
+      $('#btnConfirmImport').disabled = false;
+      toast('Não foi possível criar o romaneio: ' + (err && err.message || err));
+    });
+    return;
+  }
+
+  if(S.impDestino === 'add'){
+    var mp = S.mergePreview;
+    if(!mp){ $('#btnConfirmImport').disabled=false; return; }
+    if(estaFechado(mp.meta)){
+      $('#btnConfirmImport').disabled = false;
+      toast('Este romaneio está fechado e não aceita novas importações.');
+      return;
+    }
+    var ts2 = nowISO();
+    var numero = proximoNumeroImportacao(mp.meta);
+    var res = mp.res;
+    var impReg = {
+      numero:numero, ts:ts2, arquivo:p.arquivo, encontrados:res.resumo.encontrados,
+      novos:res.resumo.novos, jaExistentes:res.resumo.jaExistentes, conflitos:res.resumo.conflitos,
+      status:'ATIVA', usuario:S.operador||'', operador:S.operador||'', estacao:S.estacao||''
+    };
+    var inativos = (mp.todos||[]).filter(function(o){ return o.ativo===false; });
+    Store.saveOrders(mp.id, res.merged.concat(inativos)).then(function(){
+      return Store.addImportacao(mp.id, impReg);
+    }).then(function(){
+      return Store.updateMeta(mp.id, {
+        totalPedidos: res.merged.length, qtdImportacoes: (S.impsDoAlvo||[]).filter(function(i){ return i.status!=='EXCLUIDA'; }).length + 1, atualizadoEm: ts2,
+        ultimoArquivo: p.arquivo
+      });
+    }).then(function(){
+      S.pendingImport=null; $('#importResult').innerHTML=''; $('#file').value='';
+      return carregarLista().then(function(){ return abrirRomaneio(mp.id); });
+    }).then(function(){
+      registrarAuditoria('IMPORTACAO', 'Importação #'+numero+' · '+p.arquivo+' · '+
+        res.resumo.encontrados+' encontrados, '+res.resumo.novos+' novos, '+
+        res.resumo.jaExistentes+' já existentes'+(res.resumo.conflitos?', '+res.resumo.conflitos+' conflito(s) não aplicados':''));
+      if(res.resumo.conflitos){
+        registrarAuditoria('CONFLITO', res.resumo.conflitos+' registro(s) do arquivo '+p.arquivo+' ficaram fora por conferência pendente');
+      }
+      setView('scan');
+      toast(res.resumo.novos + ' pedido(s) adicionados. Total do romaneio: ' + res.merged.length + '.');
+    }).catch(function(err){
+      $('#btnConfirmImport').disabled = false;
+      toast('Não foi possível atualizar o romaneio: ' + (err && err.message || err));
+    });
+  }
+}
+
+/* =====================================================================
+   ABRIR ROMANEIO / SINCRONIZAÇÃO
+   ===================================================================== */
+function abrirRomaneio(id){
+  if(S.unsub){ try{ S.unsub(); }catch(e){} S.unsub=null; }
+  var meta = S.lista.filter(function(m){ return m.id===id; })[0];
+  return Store.loadOrders(id).then(function(orders){
+    S.romaneio = meta || { id:id, nome:id, totalPedidos:orders.length };
+    S.ordersAll = orders;                                    // tudo que já entrou, inclusive inativos
+    S.orders = orders.filter(function(o){ return o.ativo !== false; });   // composição ativa
+    S.idx = E.buildIndex(S.orders);
+    construirIndiceHistorico();
+    S.events = []; S.meus = [];
+    S.importacoes = []; S.auditoria = []; S.minhaAuditoria = [];
+    localStorage.setItem('rom.aberto', id);
+    Store.listImportacoes(id).then(function(l){ S.importacoes = l||[]; renderImportacoes(); renderDashboard(); });
+    Store.listAudit(id).then(function(l){
+      var byId = {};
+      (l||[]).forEach(function(a){ byId[a.id] = a; });
+      S.auditoria.forEach(function(a){ if(!byId[a.id]) byId[a.id] = a; });
+      S.auditoria = Object.keys(byId).map(function(k){ return byId[k]; })
+        .sort(function(a,b){ return a.ts<b.ts?-1:1; });
+      // a trilha desta sessão é recuperada para que a próxima gravação não a sobrescreva
+      S.minhaAuditoria = S.auditoria.filter(function(a){ return String(a.id).indexOf(docId) === 0; });
+      renderAuditoria();
+    });
+    S.unsub = Store.subscribe(id, function(evs){
+      // União por id: nada do que já está gravado é descartado e nada que
+      // ainda não foi confirmado se perde.
+      var byId = {};
+      evs.forEach(function(e){ byId[e.id] = e; });
+      S.meus.forEach(function(e){ if(!byId[e.id]) byId[e.id] = e; });
+      var todos = Object.keys(byId).map(function(k){ return byId[k]; });
+      S.events = todos;
+      S.meus = todos.filter(function(e){ return e.docId === docId; });
+      recalcular();
+    });
+    recalcular();
+    renderTudo();
+  });
+}
+
+function recalcular(){
+  S.rec = E.reconcile(S.orders, S.events);
+  renderDashboard();
+  renderFeed();
+  renderOcorrencias();
+  if(S.view==='concil') renderConciliacao();
+}
+
+var metaTimer=null;
+function atualizarResumoRomaneio(){
+  if(!S.romaneio || !S.rec) return;
+  clearTimeout(metaTimer);
+  metaTimer = setTimeout(function(){
+    var r = S.rec.resumo;
+    Store.updateMeta(S.romaneio.id, { resumo:{
+      embalados:r.embalados, pendentes:r.pendentes, duplicados:r.pedidosComDuplicidade,
+      naoPertencentes:r.naoPertencentes, percentual:r.percentual
+    }, atualizadoEm: nowISO() });
+    if(S.romaneio.resumo) S.romaneio.resumo = { embalados:r.embalados, pendentes:r.pendentes, duplicados:r.pedidosComDuplicidade, naoPertencentes:r.naoPertencentes, percentual:r.percentual };
+  }, 2500);
+}
+
+/* =====================================================================
+   BIPAGEM
+   ===================================================================== */
+function registrarEvento(ev){
+  S.meus.push(ev);
+  S.events = S.events.concat([ev]);
+  scheduleSave();
+  recalcular();
+}
+
+function processarBipagem(raw){
+  if(!S.romaneio){ mostrarVeredito({tipo:'warn', titulo:'Nenhum romaneio aberto', sub:'Importe o relatório do dia antes de bipar.'}); beep('nf'); return; }
+  var code = E.normCode(raw);
+  if(!code) return;
+
+  if(!S.operador){
+    mostrarVeredito({ tipo:'warn', titulo:'IDENTIFIQUE O OPERADOR',
+      sub:'Selecione o operador no topo da tela antes de bipar. Cada leitura fica registrada em nome de quem a fez.', codigo:code });
+    beep('nf');
+    return;
+  }
+
+  // Romaneio fechado: a leitura é registrada como tentativa, nunca como embalagem.
+  if(estaFechado()){
+    var evB = {
+      id: docId + '-b' + Date.now().toString(36), docId: docId, ts: nowISO(), code: code,
+      estacao: S.estacao, operador: S.operador, usuario: S.operador || S.estacao || '', status: 'BLOQUEADO',
+      orderId: null, matchedBy: '', serie: '', chave: ''
+    };
+    registrarEvento(evB);
+    registrarAuditoria('BIPAGEM_BLOQUEADA', 'Código bipado: ' + code, { ref: evB.id });
+    mostrarVeredito({
+      tipo:'dup', titulo:'🔒 ROMANEIO FECHADO',
+      sub:'Este romaneio foi encerrado em ' + ddmmyyyy(S.romaneio.fechadoEm) + ' às ' + hhmmss(S.romaneio.fechadoEm).slice(0,5) + ' e não aceita novas bipagens.',
+      codigo: code,
+      extra: [['O que fazer', 'Reabra o romaneio no topo da tela, ou bipe este volume no romaneio do dia corrente.']]
+    });
+    beep('dup');
+    return;
+  }
+
+  var r = E.resolveScan(code, S.orders, S.idx);
+  var ts = nowISO();
+  var base = {
+    id: docId + '-' + (S.meus.length+1) + '-' + Date.now().toString(36),
+    docId: docId, ts: ts, code: r.code, estacao: S.estacao, operador: S.operador,
+    matchedBy: r.matchedBy || '', serie: r.chave ? r.chave.serie : '',
+    chave: r.chave ? r.chave.chave : ''
+  };
+
+  if(r.status === 'AMBIGUO'){
+    var ev = Object.assign({}, base, { status:'AMBIGUO', orderId:null, candidatos:r.candidatos });
+    registrarEvento(ev);
+    S.ambiguo = { ev:ev, candidatos:r.candidatos };
+    renderAmbiguidade();
+    mostrarVeredito({
+      tipo:'warn', titulo:'⚠️ CONFERÊNCIA MANUAL',
+      sub:'O código bipado corresponde a mais de um pedido do romaneio. Nada foi confirmado automaticamente.',
+      codigo:code
+    });
+    beep('nf');
+    return;
+  }
+
+  if(r.status === 'NAO_ENCONTRADO' || r.status === 'INVALIDO'){
+    registrarEvento(Object.assign({}, base, { status:'NAO_ENCONTRADO', orderId:null }));
+    registrarAuditoria('BIPAGEM_NAO_ENCONTRADA', 'Código '+code+' bipado sem pertencer ao romaneio',
+      { romaneio:S.romaneio.nome });
+    mostrarVeredito({
+      tipo:'warn', titulo:'⚠️ PEDIDO NÃO ENCONTRADO NO ROMANEIO',
+      sub:'Este código não pertence ao romaneio aberto. Separe o volume e confira a nota antes de despachar.',
+      codigo:code,
+      extra:[['Operador', S.operador], ['Romaneio atual', S.romaneio.nome], ['Data/hora', ddmmyyyy(ts)+' '+hhmmss(ts)]]
+    });
+    beep('nf');
+    return;
+  }
+
+  // OK — verifica duplicidade contra o estado consolidado
+  var linha = S.rec ? S.rec.linhas.filter(function(l){ return l.order.id === r.orderId; })[0] : null;
+  var o = S.orders.filter(function(x){ return x.id === r.orderId; })[0];
+  var jaBipado = linha && linha.primeira;
+
+  registrarEvento(Object.assign({}, base, { status:'OK', orderId:r.orderId }));
+
+  var anterior = consultarRomaneioAnterior(o);
+  var avisoAnterior = anterior ? ('<b>⚠️ PEDIDO JÁ BIPADO EM ROMANEIO ANTERIOR</b>'+
+    'Pedido '+esc(anterior.pedido||'—')+' · NF '+esc(anterior.nf||'—')+'<br>'+
+    'Romaneio: '+esc(anterior.romaneio)+' · '+esc(anterior.data||ddmmyyyy(anterior.ts))+
+    ' às '+esc(hhmmss(anterior.ts))+' · operador '+esc(anterior.operador)+'<br>'+
+    'A bipagem atual foi registrada normalmente. Confira se o volume não está sendo despachado duas vezes.') : '';
+  if(anterior){
+    registrarAuditoria('BIPAGEM_ANTERIOR',
+      'Pedido já possuía bipagem ativa no romaneio '+anterior.romaneio+' ('+(anterior.data||ddmmyyyy(anterior.ts))+' '+hhmmss(anterior.ts)+', operador '+anterior.operador+')',
+      { pedido:o.pedido, nf:(o.nfRaw||o.nf), romaneio:S.romaneio.nome });
+  }
+
+  if(jaBipado){
+    mostrarVeredito({
+      tipo:'dup', titulo:'🔴 PEDIDO DUPLICADO', order:o, codigo:code,
+      sub:'Este pedido já foi bipado. O volume não entra na contagem outra vez.',
+      aviso: avisoAnterior,
+      extra:[
+        ['Primeira bipagem', ddmmyyyy(jaBipado.ts)+' '+hhmmss(jaBipado.ts)],
+        ['Operador da primeira', jaBipado.operador || jaBipado.estacao || '—'],
+        ['Esta tentativa', ddmmyyyy(ts)+' '+hhmmss(ts)],
+        ['Operador atual', S.operador]
+      ]
+    });
+    registrarAuditoria('BIPAGEM_DUPLICADA', 'Segunda leitura de '+code+' (não contabilizada)',
+      { pedido:o.pedido, nf:(o.nfRaw||o.nf), romaneio:S.romaneio.nome, antes:'EMBALADO', depois:'EMBALADO' });
+    beep('dup');
+  }else{
+    mostrarVeredito({
+      tipo:'ok', titulo:'✅ PEDIDO BIPADO COM SUCESSO', order:o, codigo:code,
+      sub:'Status: EMBALADO · '+ddmmyyyy(ts)+' '+hhmmss(ts),
+      aviso: avisoAnterior,
+      extra:[['Casou por', rotuloChave(r.matchedBy)], ['Operador', S.operador]]
+    });
+    beep('ok');
+  }
+}
+
+function rotuloChave(mb){
+  if(!mb) return '—';
+  var t = mb.split(':')[0];
+  return ({ nf:'número da NF', chave:'chave de acesso da NFe', rastreio:'código de rastreamento',
+    pedido:'número do pedido', envio:'número de envio', venda:'número de venda',
+    spx:'código de retirada', plp:'PLP', ANY:'comparação direta', manual:'conferência manual' })[t] || t;
+}
+
+function mostrarVeredito(v){
+  var el = $('#verdict');
+  var cls = { ok:'v-ok', dup:'v-dup', warn:'v-warn' }[v.tipo] || 'v-idle';
+  var o = v.order;
+  var campos = [];
+  if(o){
+    campos.push(['Pedido', o.pedido || '—', true]);
+    campos.push(['Cliente', o.cliente || '—', false]);
+    campos.push(['Serviço', (o.servico||'—') + (o.transportadora?' · '+o.transportadora:''), false]);
+    campos.push(['Etiqueta', o.etiquetaRaw || '—', true]);
+    campos.push(['Cidade', o.cidade || '—', false]);
+  }
+  if(v.codigo) campos.push(['Código bipado', v.codigo, true]);
+  (v.extra||[]).forEach(function(p){ campos.push([p[0], p[1], false]); });
+
+  el.className = 'verdict ' + cls + ' v-flash';
+  el.innerHTML = '<div class="verdict-inner">'+
+    '<div class="v-head"><h2 class="v-title">'+esc(v.titulo)+'</h2></div>'+
+    (o ? '<div class="v-nf">NF '+esc(o.nfRaw || o.nf)+'</div>' : '')+
+    '<p class="v-sub" style="margin:'+(o?'0':'8px 0 0')+'">'+esc(v.sub||'')+'</p>'+
+    (campos.length ? '<dl class="v-fields">'+campos.map(function(c){
+      return '<div><dt>'+esc(c[0])+'</dt><dd'+(c[2]?' class="code"':'')+'>'+esc(c[1])+'</dd></div>';
+    }).join('')+'</dl>' : '')+
+    (v.aviso ? '<div class="aviso-anterior">'+v.aviso+'</div>' : '')+
+  '</div>';
+  void el.offsetWidth;
+}
+
+function renderAmbiguidade(){
+  var box = $('#ambigBox');
+  if(!S.ambiguo){ box.innerHTML=''; return; }
+  var cands = S.ambiguo.candidatos.map(function(id){
+    return S.orders.filter(function(o){ return o.id===id; })[0];
+  }).filter(Boolean);
+  box.innerHTML = '<div class="ambig"><h3>Conferência manual necessária</h3>'+
+    '<div class="hint">O código <span class="code">'+esc(S.ambiguo.ev.code)+'</span> aparece em '+cands.length+' pedidos do romaneio. '+
+    'Confira a nota impressa no volume e escolha qual pedido está na sua mão — o sistema não escolhe sozinho.</div>'+
+    '<div class="opts">'+cands.map(function(o){
+      return '<button class="opt" data-id="'+o.id+'"><b>NF '+esc(o.nfRaw||o.nf)+'</b>'+esc(o.cliente)+'<br><span class="hint code">'+esc(o.etiquetaRaw)+'</span></button>';
+    }).join('')+
+    '<button class="opt" data-id="__none__"><b>Nenhum destes</b>Registrar como não encontrado</button>'+
+    '</div></div>';
+  box.querySelectorAll('.opt').forEach(function(b){
+    b.onclick = function(){ resolverAmbiguidade(b.getAttribute('data-id')); };
+  });
+}
+
+function resolverAmbiguidade(id){
+  var a = S.ambiguo;
+  if(!a) return;
+  S.ambiguo = null;
+  renderAmbiguidade();
+  var ts = nowISO();
+  var base = {
+    id: docId+'-m'+Date.now().toString(36), docId:docId, ts:ts, code:a.ev.code,
+    estacao:S.estacao, operador:S.operador, matchedBy:'manual:conferencia', serie:'', chave:'', resolveDe:a.ev.id
+  };
+  if(id === '__none__'){
+    registrarEvento(Object.assign({}, base, { status:'NAO_ENCONTRADO', orderId:null }));
+    mostrarVeredito({ tipo:'warn', titulo:'⚠️ PEDIDO NÃO ENCONTRADO NO ROMANEIO', sub:'Registrado como não pertencente ao romaneio após conferência.', codigo:a.ev.code });
+    beep('nf'); focoScan(); return;
+  }
+  var linha = S.rec.linhas.filter(function(l){ return l.order.id===id; })[0];
+  var o = S.orders.filter(function(x){ return x.id===id; })[0];
+  var jaBipado = linha && linha.primeira;
+  registrarEvento(Object.assign({}, base, { status:'OK', orderId:id }));
+  if(jaBipado){
+    mostrarVeredito({ tipo:'dup', titulo:'🔴 PEDIDO DUPLICADO', order:o, codigo:a.ev.code,
+      sub:'Este pedido já tinha sido bipado.',
+      extra:[['Primeira bipagem', ddmmyyyy(jaBipado.ts)+' '+hhmmss(jaBipado.ts)],['Esta tentativa', ddmmyyyy(ts)+' '+hhmmss(ts)]] });
+    beep('dup');
+  }else{
+    mostrarVeredito({ tipo:'ok', titulo:'✅ PEDIDO CONFIRMADO', order:o, codigo:a.ev.code,
+      sub:'Confirmado por conferência manual às '+hhmmss(ts), extra:[['Casou por','conferência manual']] });
+    beep('ok');
+  }
+  focoScan();
+}
+
+/* =====================================================================
+   FECHAMENTO E REABERTURA
+   ===================================================================== */
+function modal(opts){
+  var bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = '<div class="modal" role="dialog" aria-modal="true">'+
+    '<h2>'+opts.titulo+'</h2><div class="body">'+opts.corpo+'</div>'+
+    '<div class="foot">'+
+      '<button class="btn" data-x="cancel">'+(opts.cancelar||'Cancelar')+'</button>'+
+      '<button class="btn primary" data-x="ok"'+(opts.exigeCheck?' disabled':'')+'>'+opts.confirmar+'</button>'+
+    '</div></div>';
+  document.body.appendChild(bg);
+  var fechar = function(){ bg.remove(); focoScan(); };
+  bg.querySelector('[data-x=cancel]').onclick = fechar;
+  bg.addEventListener('click', function(e){ if(e.target===bg) fechar(); });
+  var chk = bg.querySelector('#modalCheck');
+  var okb = bg.querySelector('[data-x=ok]');
+  if(chk) chk.onchange = function(){ okb.disabled = !chk.checked; };
+  okb.onclick = function(){ fechar(); opts.onOk(); };
+  document.addEventListener('keydown', function esc(e){
+    if(e.key==='Escape'){ fechar(); document.removeEventListener('keydown', esc); }
+  });
+  setTimeout(function(){ (chk||okb).focus(); }, 30);
+  return bg;
+}
+
+function abrirFechamento(){
+  if(!S.romaneio || estaFechado()) return;
+  if(!exigirOperador('fechar o romaneio')) return;
+  var r = S.rec.resumo;
+  var corpo = '<p style="margin:0">Você está prestes a fechar o romaneio de <b>'+esc(S.romaneio.dataReferencia || ddmmyyyy(S.romaneio.criadoEm))+'</b>.</p>'+
+    '<div class="nums">'+
+      '<div><div class="n">'+r.totalPedidos+'</div><div class="l">Total de pedidos</div></div>'+
+      '<div><div class="n" style="color:var(--ok)">'+r.embalados+'</div><div class="l">Bipados</div></div>'+
+      '<div><div class="n">'+r.pendentes+'</div><div class="l">Pendentes</div></div>'+
+      '<div><div class="n" style="color:var(--dup)">'+r.pedidosComDuplicidade+'</div><div class="l">Duplicados</div></div>'+
+    '</div>'+
+    (r.pendentes ? '<div class="alert" style="margin:0 0 10px">Existem '+r.pendentes+' pedidos pendentes. Deseja revisar a conciliação antes de fechar? O fechamento é permitido mesmo assim.</div>' : '')+
+    '<p class="hint" style="margin:0">Depois de fechado, o romaneio não aceita importações nem bipagens, e nada mais pode ser alterado. Todo o histórico continua disponível para consulta e exportação.</p>'+
+    '<p style="margin:12px 0 0"><b>Tem certeza que deseja fechar este romaneio?</b></p>';
+  modal({
+    titulo:'Fechar romaneio', corpo:corpo, confirmar:'🔒 Fechar romaneio',
+    onOk: fecharRomaneio
+  });
+}
+
+function fecharRomaneio(){
+  var ts = nowISO();
+  var r = S.rec.resumo;
+  var retrato = { totalPedidos:r.totalPedidos, embalados:r.embalados, pendentes:r.pendentes,
+    duplicados:r.pedidosComDuplicidade, naoPertencentes:r.naoPertencentes, percentual:r.percentual };
+  patchMeta({
+    status:'FECHADO', fechadoEm:ts, fechadoPor:(S.operador||S.estacao||''),
+    fechamento: retrato, atualizadoEm: ts,
+    resumo: { embalados:r.embalados, pendentes:r.pendentes, duplicados:r.pedidosComDuplicidade,
+      naoPertencentes:r.naoPertencentes, percentual:r.percentual }
+  }).then(function(){
+    registrarAuditoria('FECHAMENTO', 'Romaneio fechado · total '+r.totalPedidos+', bipados '+r.embalados+
+      ', pendentes '+r.pendentes+', duplicados '+r.pedidosComDuplicidade+', não pertencentes '+r.naoPertencentes+
+      ', importações ativas '+S.importacoes.filter(function(i){ return i.status!=='EXCLUIDA'; }).length,
+      { romaneio:S.romaneio.nome, antes:'ABERTO', depois:'FECHADO' });
+    renderTudo();
+    toast('Romaneio fechado. A partir de agora é somente leitura.');
+  });
+}
+
+function abrirReabertura(){
+  if(!S.romaneio || !estaFechado()) return;
+  if(!exigirOperador('reabrir o romaneio')) return;
+  var corpo = '<p style="margin:0">Este romaneio está fechado. Reabrir permitirá novas importações e bipagens.</p>'+
+    '<p class="hint">Fechado em '+esc(ddmmyyyy(S.romaneio.fechadoEm)+' às '+hhmmss(S.romaneio.fechadoEm))+
+    (S.romaneio.fechadoPor ? ' por '+esc(S.romaneio.fechadoPor) : '')+'. '+
+    'Nenhuma informação é apagada na reabertura: bipagens, importações e a trilha de auditoria permanecem como estão.</p>'+
+    '<label class="check"><input type="checkbox" id="modalCheck"><span>Entendo que o romaneio voltará a aceitar importações e bipagens, e que esta ação fica registrada na auditoria.</span></label>'+
+    '<p style="margin:12px 0 0"><b>Tem certeza que deseja reabrir?</b></p>';
+  modal({
+    titulo:'Reabrir romaneio', corpo:corpo, confirmar:'Reabrir romaneio', exigeCheck:true,
+    onOk: reabrirRomaneio
+  });
+}
+
+function reabrirRomaneio(){
+  var ts = nowISO();
+  var fechadoAntes = S.romaneio.fechadoEm;
+  patchMeta({
+    status:'ABERTO', reabertoEm:ts, reaberturas:(S.romaneio.reaberturas||0)+1, atualizadoEm:ts
+  }).then(function(){
+    registrarAuditoria('REABERTURA', 'Romaneio reaberto (fechamento anterior em '+ddmmyyyy(fechadoAntes)+' '+hhmmss(fechadoAntes)+')',
+      { romaneio:S.romaneio.nome, antes:'FECHADO', depois:'ABERTO' });
+    renderTudo();
+    toast('Romaneio reaberto. Importações e bipagens liberadas.');
+    setView('scan');
+  });
+}
+
+/* =====================================================================
+   PAINÉIS
+   ===================================================================== */
+function renderDashboard(){
+  var r = S.rec ? S.rec.resumo : { totalPedidos:0, embalados:0, pendentes:0, pedidosComDuplicidade:0, naoPertencentes:0, percentual:0, ambiguos:0 };
+  $('#counters').innerHTML =
+    cnt('', r.totalPedidos, 'Total de pedidos') +
+    cnt('ok', r.embalados, 'Bipados') +
+    cnt('', r.pendentes, 'Pendentes') +
+    cnt('dup', r.pedidosComDuplicidade, 'Duplicados') +
+    cnt('warn', r.naoPertencentes, 'Não encontrados') +
+    cnt('warn', r.ambiguos, 'Ambíguos');
+  var pct = r.percentual || 0;
+  $('#pctTxt').textContent = pct + '%';
+  $('#bar').style.width = Math.min(100, pct) + '%';
+  var full = Math.round(pct/5);
+  $('#barAscii').textContent = r.totalPedidos ? (r.totalPedidos + ' pedidos  ' + '█'.repeat(full) + '░'.repeat(20-full)) : '';
+  $('#brandSub').textContent = S.romaneio ? (S.romaneio.nome + ' · ' + r.embalados + '/' + r.totalPedidos) : 'Nenhum romaneio aberto';
+  $('#viewMeta').textContent = S.romaneio ? (S.romaneio.nome + ' · ' + r.totalPedidos + ' pedidos · ' + (S.importacoes.length||1) + ' importação(ões)') : '';
+  $('#scanNoRom').classList.toggle('hidden', !!S.romaneio);
+  $('#concilNoRom').classList.toggle('hidden', !!S.romaneio);
+  renderEstadoRomaneio();
+}
+
+function renderEstadoRomaneio(){
+  var badge = $('#romStatus'), bF = $('#btnFechar'), bR = $('#btnReabrir');
+  if(!S.romaneio){
+    badge.classList.add('hidden'); bF.classList.add('hidden'); bR.classList.add('hidden');
+    $('#lockBar').innerHTML = ''; return;
+  }
+  var fechado = estaFechado();
+  badge.classList.remove('hidden');
+  badge.className = 'statusbadge ' + (fechado ? 'fechado' : 'aberto');
+  badge.textContent = fechado ? '🔒 Romaneio fechado' : '🟢 Romaneio aberto';
+  bF.classList.toggle('hidden', fechado);
+  bR.classList.toggle('hidden', !fechado);
+
+  // rodapé do painel com última atualização e nº de importações
+  var ultima = S.importacoes.length ? S.importacoes[S.importacoes.length-1] : null;
+  var meta = document.getElementById('dashMeta');
+  if(!meta){
+    meta = document.createElement('div');
+    meta.id = 'dashMeta'; meta.className = 'dash-meta';
+    var alvo = $('#counters').parentNode;
+    alvo.insertBefore(meta, $('#counters').nextSibling);
+  }
+  meta.innerHTML = '<span>Última atualização <b>'+(ultima ? esc(hhmmss(ultima.ts).slice(0,5)) : esc(hhmmss(S.romaneio.criadoEm).slice(0,5)))+'</b></span>'+
+    '<span><b>'+(S.importacoes.length||1)+'</b> importação(ões) neste romaneio</span>'+
+    (fechado ? '<span>Fechado em <b>'+esc(ddmmyyyy(S.romaneio.fechadoEm)+' '+hhmmss(S.romaneio.fechadoEm).slice(0,5))+'</b></span>' : '');
+
+  $('#lockBar').innerHTML = fechado
+    ? '<div class="lockbar"><b>🔒 Romaneio fechado</b><span>Este romaneio está encerrado e não pode mais ser alterado. Consulta e exportação continuam liberadas.</span>'+
+      '<span style="flex:1"></span><button class="btn sm" id="lockReabrir">Reabrir romaneio</button></div>'
+    : '';
+  var lr = document.getElementById('lockReabrir');
+  if(lr) lr.onclick = abrirReabertura;
+}
+
+function renderImportacoes(){
+  var el = $('#impList');
+  if(!el) return;
+  $('#impCount').textContent = S.importacoes.length ? S.importacoes.length + ' importações' : '';
+  if(!S.importacoes.length){ el.innerHTML = '<div class="empty">Nenhuma importação registrada.</div>'; return; }
+  var ativas = S.importacoes.filter(function(i){ return i.status!=='EXCLUIDA'; }).length;
+  $('#impCount').textContent = ativas + ' ativa(s) de ' + S.importacoes.length;
+  el.innerHTML = S.importacoes.map(function(i){
+    var exc = i.status==='EXCLUIDA';
+    return '<div class="imp-row'+(exc?' excluida':'')+'"><span class="num">#'+i.numero+'</span>'+
+      '<span class="t code" style="color:var(--ink-3);font-size:11.5px">'+esc(ddmmyyyy(i.ts)+' '+hhmmss(i.ts).slice(0,5))+'</span>'+
+      '<span class="arq">'+esc(i.arquivo||'')+(i.usuario?' <span class="hint">· '+esc(i.usuario)+'</span>':'')+
+        (exc?' <span class="tag idle">🗑️ Importação excluída</span>':'')+'</span>'+
+      '<span class="nums">'+i.encontrados+' pedidos · <b style="color:var(--ok)">'+i.novos+' novos</b>'+
+      (i.jaExistentes?' · '+i.jaExistentes+' já existentes':'')+
+      (i.conflitos?' · <b style="color:var(--warn)">'+i.conflitos+' conflito(s)</b>':'')+'</span>'+
+      (exc ? '<span class="hint">'+esc(ddmmyyyy(i.excluidaEm)+' '+hhmmss(i.excluidaEm).slice(0,5)+(i.excluidaPor?' · '+i.excluidaPor:''))+'</span>'
+           : '<button class="rowbtn" title="Excluir importação" data-delimp="'+i.numero+'">🗑️</button>')+
+      '</div>';
+  }).join('');
+  el.querySelectorAll('[data-delimp]').forEach(function(b){
+    b.onclick = function(){ pedirExclusaoImportacao(Number(b.getAttribute('data-delimp'))); };
+  });
+}
+
+function renderAuditoria(){
+  var el = $('#audList');
+  if(!el) return;
+  var lista = S.auditoria.slice().sort(function(a,b){ return a.ts<b.ts?1:-1; });
+  if(!lista.length){ el.innerHTML = '<div class="empty">Sem registros.</div>'; return; }
+  el.innerHTML = lista.slice(0,80).map(function(a){
+    var cls = a.tipo==='FECHAMENTO' ? 'dup' : a.tipo==='REABERTURA' || a.tipo==='BIPAGEM_BLOQUEADA' || a.tipo==='CONFLITO' ? 'warn' : 'ok';
+    return '<div class="feed-item '+cls+'"><span class="t">'+esc(ddmmyyyy(a.ts)+' '+hhmmss(a.ts).slice(0,5))+'</span>'+
+      '<span class="c"><b>'+esc(E.AUDIT_LABEL[a.tipo]||a.tipo)+'</b> '+esc(a.detalhe||'')+
+      (a.usuario ? '<span class="code">'+esc(a.usuario)+'</span>' : '')+'</span></div>';
+  }).join('');
+}
+function cnt(cls, n, label){
+  return '<div class="counter '+cls+'"><div class="n">'+n+'</div><div class="l">'+label+'</div></div>';
+}
+
+function renderFeed(){
+  var evs = S.events.slice().sort(function(a,b){ return a.ts<b.ts?1:-1; }).slice(0,60);
+  var el = $('#feed');
+  $('#feedCount').textContent = S.events.length ? S.events.length + ' bipagens no romaneio' : '';
+  if(!evs.length){ el.innerHTML = '<div class="empty">Nenhuma bipagem registrada ainda.</div>'; return; }
+  var primeiras = {};
+  if(S.rec) S.rec.linhas.forEach(function(l){ if(l.primeira) primeiras[l.primeira.id] = 1; });
+  el.innerHTML = evs.map(function(e){
+    var o = e.orderId ? S.orders.filter(function(x){ return x.id===e.orderId; })[0] : null;
+    var cls, txt;
+    if(e.excluida){ cls='idle'; txt='<b>Bipagem excluída</b> '+esc(e.motivoExclusao||'') ; }
+    else if(e.status==='BLOQUEADO'){ cls='dup'; txt='<b>Bloqueada</b> romaneio fechado'; }
+    else if(e.status==='OK'){
+      if(primeiras[e.id]){ cls='ok'; txt='<b>Confirmado</b> NF '+esc(o?(o.nfRaw||o.nf):'') + ' · ' + esc(o?o.cliente:''); }
+      else { cls='dup'; txt='<b>Duplicado</b> NF '+esc(o?(o.nfRaw||o.nf):'') + ' · ' + esc(o?o.cliente:''); }
+    } else if(e.status==='AMBIGUO'){ cls='warn'; txt='<b>Ambíguo</b> conferência manual'; }
+    else { cls='warn'; txt='<b>Não encontrado</b> fora do romaneio'; }
+    var podeExcluir = !e.excluida && e.status==='OK' && !estaFechado();
+    return '<div class="feed-item '+cls+(e.excluida?' excluida':'')+'"><span class="t">'+esc(hhmmss(e.ts))+'</span><span class="c">'+txt+
+      '<span class="code">'+esc(e.code)+(e.operador||e.estacao?' · '+esc(e.operador||e.estacao):'')+'</span></span>'+
+      (podeExcluir ? '<button class="rowbtn" title="Excluir esta bipagem" data-del="'+esc(e.id)+'">🗑️</button>' : '')+
+      '</div>';
+  }).join('');
+  el.querySelectorAll('[data-del]').forEach(function(b){
+    b.onclick = function(){ pedirExclusaoBipagem(b.getAttribute('data-del')); };
+  });
+}
+
+function renderOcorrencias(){
+  var el = $('#ocorrencias');
+  if(!S.rec){ el.innerHTML='<div class="empty">Sem ocorrências.</div>'; return; }
+  var items = [];
+  S.rec.naoEncontrados.forEach(function(n){
+    items.push({ ts:n.primeira.ts, cls:'warn', tit:'Fora do romaneio', code:n.code, det:n.tentativas.length+' tentativa(s)' });
+  });
+  S.rec.ambiguos.forEach(function(a){
+    items.push({ ts:a.ts, cls:'warn', tit:'Ambíguo', code:a.code, det:'aguarda conferência' });
+  });
+  S.rec.linhas.filter(function(l){ return l.temDuplicidade; }).forEach(function(l){
+    items.push({ ts:l.duplicadas[l.duplicadas.length-1].ts, cls:'dup', tit:'Duplicado · NF '+(l.order.nfRaw||l.order.nf),
+      code:l.order.pedido||l.order.etiquetaRaw, det:l.duplicadas.length+' tentativa(s) extra' });
+  });
+  if(!items.length){ el.innerHTML='<div class="empty">Sem ocorrências.</div>'; return; }
+  items.sort(function(a,b){ return a.ts<b.ts?1:-1; });
+  el.innerHTML = items.slice(0,40).map(function(i){
+    return '<div class="feed-item '+i.cls+'"><span class="t">'+esc(hhmmss(i.ts))+'</span><span class="c"><b>'+esc(i.tit)+'</b> '+esc(i.det)+
+      '<span class="code">'+esc(i.code)+'</span></span></div>';
+  }).join('');
+}
+
+/* =====================================================================
+   CONCILIAÇÃO
+   ===================================================================== */
+function linhasConciliacao(){
+  if(!S.rec) return [];
+  var out = S.rec.linhas.map(function(l){
+    return {
+      status: l.status === 'EMBALADO' ? (l.temDuplicidade ? 'EMBALADO' : 'EMBALADO') : 'PENDENTE',
+      dup: l.temDuplicidade, order:l.order, primeira:l.primeira, duplicadas:l.duplicadas,
+      obs: [l.temDuplicidade ? (l.duplicadas.length+' bipagem(ns) duplicada(s)') : '', l.revisao||'']
+        .filter(Boolean).join(' · ')
+    };
+  });
+  S.rec.naoEncontrados.forEach(function(n){
+    out.push({ status:'NAO_PERTENCE', dup:false, order:null, primeira:n.primeira, duplicadas:[],
+      code:n.code, obs:'Bipado '+n.tentativas.length+'x sem estar no romaneio' });
+  });
+  S.rec.ambiguos.forEach(function(a){
+    out.push({ status:'AMBIGUO', dup:false, order:null, primeira:a, duplicadas:[], code:a.code,
+      obs:'Compatível com '+((a.candidatos||[]).length)+' pedidos — conferir manualmente' });
+  });
+  return out;
+}
+
+function aplicarFiltros(rows){
+  var st = $('#fStatus').value, txt = E.normCode($('#fTexto').value), tr = $('#fTransp').value,
+      sv = $('#fServ').value, dt = $('#fData').value, h1 = $('#fHoraDe').value, h2 = $('#fHoraAte').value;
+  return rows.filter(function(r){
+    if(st){
+      if(st==='DUPLICADO'){ if(!r.dup) return false; }
+      else if(r.status !== st) return false;
+    }
+    if(tr && (!r.order || r.order.transportadora !== tr)) return false;
+    if(sv && (!r.order || r.order.servico !== sv)) return false;
+    if(txt){
+      var blob = E.normCode([
+        r.order ? r.order.nf : '', r.order ? r.order.nfRaw : '', r.order ? r.order.pedido : '',
+        r.order ? E.stripAccents(r.order.cliente) : '', r.order ? r.order.etiquetaRaw : '',
+        r.order ? r.order.rastreio : '', r.order ? E.stripAccents(r.order.cidade) : '',
+        r.code||'', r.primeira ? r.primeira.code : ''
+      ].join('|'));
+      if(blob.indexOf(txt) === -1) return false;
+    }
+    if(dt){
+      if(!r.primeira) return false;
+      var d = new Date(r.primeira.ts);
+      var iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if(iso !== dt) return false;
+    }
+    if(h1 || h2){
+      if(!r.primeira) return false;
+      var hh = hhmmss(r.primeira.ts).slice(0,5);
+      if(h1 && hh < h1) return false;
+      if(h2 && hh > h2) return false;
+    }
+    return true;
+  });
+}
+
+function renderConciliacao(){
+  var todas = linhasConciliacao();
+  // preenche selects
+  var trs = {}, svs = {};
+  S.orders.forEach(function(o){ if(o.transportadora) trs[o.transportadora]=1; if(o.servico) svs[o.servico]=1; });
+  syncSelect('#fTransp', Object.keys(trs).sort(), 'Todas as transportadoras');
+  syncSelect('#fServ', Object.keys(svs).sort(), 'Todos os serviços');
+
+  var rows = aplicarFiltros(todas);
+  $('#filtroInfo').textContent = rows.length + ' de ' + todas.length + ' linhas';
+  var tb = $('#tblConcil').querySelector('tbody');
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="11"><div class="empty">Nenhuma linha com esses filtros.</div></td></tr>'; return; }
+  tb.innerHTML = rows.map(function(r){
+    var o = r.order;
+    var tag = r.status==='EMBALADO' ? '<span class="tag ok">Embalado</span>' :
+              r.status==='PENDENTE' ? '<span class="tag idle">Pendente</span>' :
+              r.status==='NAO_PERTENCE' ? '<span class="tag warn">Fora do romaneio</span>' :
+              '<span class="tag warn">Ambíguo</span>';
+    if(r.dup) tag += ' <span class="tag dup">duplicado</span>';
+    return '<tr>'+
+      '<td>'+tag+'</td>'+
+      '<td class="code">'+esc(o?(o.nfRaw||o.nf):'—')+'</td>'+
+      '<td class="code">'+esc(o ? (o.serie || (r.primeira&&r.primeira.serie) || '') : '')+'</td>'+
+      '<td class="code">'+esc(o?o.pedido:'—')+'</td>'+
+      '<td>'+esc(o?o.cliente:'—')+'</td>'+
+      '<td class="code">'+esc(o?o.etiquetaRaw:(r.code||''))+'</td>'+
+      '<td>'+esc(o?o.servico:'')+'</td>'+
+      '<td>'+esc(o?o.transportadora:'')+'</td>'+
+      '<td>'+(r.primeira ? esc(ddmmyyyy(r.primeira.ts)+' '+hhmmss(r.primeira.ts)) : '—')+'</td>'+
+      '<td>'+esc(r.primeira?(r.primeira.estacao||''):'')+'</td>'+
+      '<td class="hint">'+esc(r.obs||'')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+function syncSelect(sel, values, placeholder){
+  var el = $(sel);
+  if(el.getAttribute('data-filled') === values.join('|')) return;
+  var cur = el.value;
+  el.innerHTML = '<option value="">'+placeholder+'</option>' + values.map(function(v){
+    return '<option value="'+esc(v)+'">'+esc(v)+'</option>';
+  }).join('');
+  el.value = cur;
+  el.setAttribute('data-filled', values.join('|'));
+}
+
+/* =====================================================================
+   EXPORTAÇÃO
+   ===================================================================== */
+function exportar(){
+  if(!S.rec || !S.romaneio){ toast('Abra um romaneio antes de exportar.'); return; }
+  var rows = E.exportRows(S.rec, S.romaneio);
+  var resumo = E.resumoRows(S.rec, S.romaneio, S.importacoes);
+  var imps = E.importacoesRows(S.importacoes);
+  var audit = E.auditoriaRows(auditoriaCompleta(), S.rec);
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:26},{wch:12},{wch:12},{wch:9},{wch:7},{wch:18},{wch:26},{wch:24},{wch:24},{wch:16},{wch:22},{wch:16},{wch:13},{wch:26},{wch:24},{wch:12},{wch:12},{wch:44}];
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:rows.length-1, c:rows[0].length-1} }) };
+  ws['!freeze'] = { xSplit:0, ySplit:1 };
+  XLSX.utils.book_append_sheet(wb, ws, 'Romaneio');
+  var ws2 = XLSX.utils.aoa_to_sheet(resumo);
+  ws2['!cols'] = [{wch:40},{wch:42}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
+
+  var ws3 = XLSX.utils.aoa_to_sheet(imps);
+  ws3['!cols'] = [{wch:16},{wch:12},{wch:10},{wch:34},{wch:20},{wch:16},{wch:22},{wch:12},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Importações');
+
+  var ws4 = XLSX.utils.aoa_to_sheet(audit);
+  ws4['!cols'] = [{wch:12},{wch:10},{wch:38},{wch:64},{wch:20},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Auditoria');
+
+  var out = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+  var nome = 'romaneio-' + (S.romaneio.dataReferencia||'').replace(/\//g,'-') + '-' + S.romaneio.id + '.xlsx';
+
+  var salvar = (window.claude && window.claude.use) ? window.claude.use('downloads') : Promise.resolve(null);
+  salvar.then(function(d){
+    if(d && d.save){
+      return d.save({ filename:nome, data:out }).then(function(){
+        registrarAuditoria('EXPORTACAO', 'Romaneio consolidado exportado ('+nome+')');
+        toast('Romaneio exportado.');
+      });
+    }
+    var blob = new Blob([out], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    registrarAuditoria('EXPORTACAO', 'Romaneio consolidado exportado ('+nome+')');
+    toast('Romaneio exportado.');
+  }).catch(function(err){
+    if(err && err.code === 'declined') return;
+    toast('Não foi possível salvar o arquivo.');
+  });
+}
+
+// Junta a trilha de auditoria com os eventos de bipagem, para a aba Auditoria.
+function auditoriaCompleta(){
+  var lista = S.auditoria.slice();
+  var primeiras = {};
+  if(S.rec) S.rec.linhas.forEach(function(l){ if(l.primeira) primeiras[l.primeira.id]=1; });
+  S.events.forEach(function(e){
+    if(e.status==='BLOQUEADO') return;   // já entram por rec.bloqueadas
+    var o = e.orderId ? S.orders.filter(function(x){ return x.id===e.orderId; })[0] : null;
+    var tipo = e.excluida ? 'EXCLUSAO_BIPAGEM'
+      : e.status==='OK' ? (primeiras[e.id] ? 'BIPAGEM' : 'BIPAGEM_DUPLICADA')
+      : e.status==='AMBIGUO' ? 'CONFLITO' : 'BIPAGEM_NAO_ENCONTRADA';
+    if(lista.some(function(a){ return a.ref===e.id; })) return;
+    lista.push({
+      id:'ev-'+e.id, ref:e.id, ts:(e.excluida? e.excluidaEm : e.ts), tipo:tipo,
+      detalhe:'Código '+e.code+(e.excluida?(' · excluída'+(e.motivoExclusao?': '+e.motivoExclusao:'')):''),
+      usuario:(e.excluida? (e.excluidaPor||'') : (e.operador||e.estacao||'')),
+      estacao:e.estacao||'', romaneio:(S.romaneio?S.romaneio.nome:''),
+      pedido:(o?o.pedido:''), nf:(o?(o.nfRaw||o.nf):'')
+    });
+  });
+  return lista;
+}
+
+function copiarPendentes(){
+  if(!S.rec) return;
+  var txt = S.rec.linhas.filter(function(l){ return l.status==='PENDENTE'; })
+    .map(function(l){ return [l.order.nfRaw||l.order.nf, l.order.pedido, l.order.cliente, l.order.etiquetaRaw, l.order.servico].join('\t'); })
+    .join('\n');
+  if(!txt){ toast('Nenhum pedido pendente.'); return; }
+  navigator.clipboard.writeText(txt).then(function(){ toast('Pendentes copiados para a área de transferência.'); },
+    function(){ toast('Não foi possível copiar.'); });
+}
+
+/* =====================================================================
+   HISTÓRICO
+   ===================================================================== */
+function carregarLista(){
+  return Store.listRomaneios().then(function(l){
+    S.lista = l || [];
+    renderHistorico();
+    return S.lista;
+  }).catch(function(){ S.lista = []; renderHistorico(); return S.lista; });
+}
+
+function filtrarHistorico(){
+  var de = $('#hDe').value, ate = $('#hAte').value, st = $('#hStatus').value,
+      op = $('#hOper').value, busca = E.stripAccents(($('#hBusca').value||'')).toLowerCase(),
+      verExcluidos = $('#hExcluidos').checked;
+  return S.lista.filter(function(m){
+    if(!verExcluidos && m.excluido) return false;
+    if(verExcluidos && !m.excluido) return false;
+    var st_ = m.status==='FECHADO' ? 'FECHADO' : 'ABERTO';
+    if(st && st_ !== st) return false;
+    if(op && (m.criadoPor!==op && m.fechadoPor!==op)) return false;
+    var dia = (m.criadoEm||'').slice(0,10);
+    if(de && dia < de) return false;
+    if(ate && dia > ate) return false;
+    if(busca){
+      var blob = E.stripAccents([m.nome, m.id, m.dataReferencia, m.ultimoArquivo, m.arquivo].join(' ')).toLowerCase();
+      if(blob.indexOf(busca) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function renderHistorico(){
+  var tb = $('#tblHist').querySelector('tbody');
+  var ops = {};
+  S.lista.forEach(function(m){ if(m.criadoPor) ops[m.criadoPor]=1; if(m.fechadoPor) ops[m.fechadoPor]=1; });
+  syncSelect('#hOper', Object.keys(ops).sort(), 'Todos os operadores');
+
+  var linhas = filtrarHistorico();
+  var info = $('#histInfo');
+  if(info) info.textContent = linhas.length + ' romaneio(s)' + ($('#hExcluidos').checked ? ' excluído(s)' : '');
+  if(!linhas.length){
+    tb.innerHTML = '<tr><td colspan="13"><div class="empty">' +
+      (S.lista.length ? 'Nenhum romaneio com esses filtros.' : 'Nenhum romaneio importado ainda. Comece pela tela de importação.') +
+      '</div></td></tr>';
+    return;
+  }
+  tb.innerHTML = linhas.map(function(m){
+    var r = m.resumo || {};
+    var atual = S.romaneio && S.romaneio.id === m.id;
+    var fechado = m.status === 'FECHADO';
+    return '<tr'+(m.excluido?' class="excluida"':'')+'>'+
+      '<td>'+esc(m.dataReferencia || ddmmyyyy(m.criadoEm))+'</td>'+
+      '<td>'+(m.excluido ? '<span class="tag idle">🗑️ Excluído</span>' :
+             fechado ? '<span class="tag dup">🔴 Fechado</span>' : '<span class="tag ok">🟢 Aberto</span>')+'</td>'+
+      '<td>'+esc(m.nome)+(atual?' <span class="tag ok">em uso</span>':'')+
+        '<div class="hint">criado por '+esc(m.criadoPor||'—')+(m.fechadoPor?' · fechado por '+esc(m.fechadoPor):'')+'</div></td>'+
+      '<td>'+(m.totalPedidos||0)+'</td>'+
+      '<td>'+(r.embalados||0)+'</td>'+
+      '<td>'+(r.pendentes==null?(m.totalPedidos||0):r.pendentes)+'</td>'+
+      '<td>'+(r.duplicados||0)+'</td>'+
+      '<td>'+(r.naoPertencentes||0)+'</td>'+
+      '<td>'+(r.percentual||0)+'%</td>'+
+      '<td>'+(m.qtdImportacoes||1)+'</td>'+
+      '<td>'+esc(ddmmyyyy(m.abertoEm||m.criadoEm)+' '+hhmmss(m.abertoEm||m.criadoEm).slice(0,5))+'</td>'+
+      '<td>'+(m.fechadoEm ? esc(ddmmyyyy(m.fechadoEm)+' '+hhmmss(m.fechadoEm).slice(0,5)) : '—')+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn sm" data-open="'+esc(m.id)+'">'+(atual?'Recarregar':'Abrir')+'</button>'+
+        (m.excluido ? '' : ' <button class="rowbtn" title="Excluir romaneio" data-delrom="'+esc(m.id)+'">🗑️</button>')+'</td>'+
+    '</tr>';
+  }).join('');
+  tb.querySelectorAll('[data-open]').forEach(function(b){
+    b.onclick = function(){
+      var id = b.getAttribute('data-open');
+      b.disabled = true;
+      abrirRomaneio(id).then(function(){ setView('scan'); toast('Romaneio aberto.'); })
+        .catch(function(){ b.disabled=false; toast('Não foi possível abrir este romaneio.'); });
+    };
+  });
+  tb.querySelectorAll('[data-delrom]').forEach(function(b){
+    b.onclick = function(){ pedirExclusaoRomaneio(b.getAttribute('data-delrom')); };
+  });
+}
+
+/* =====================================================================
+   OPERADORES
+   ===================================================================== */
+function carregarOperadores(){
+  return Store.loadOperadores().then(function(l){
+    S.operadores = l || [];
+    if(S.operador && !S.operadores.some(function(o){ return o.nome===S.operador && o.status==='ATIVO'; })){
+      var ainda = S.operadores.filter(function(o){ return o.nome===S.operador; })[0];
+      if(!ainda) S.operador = '';
+    }
+    renderOperadores(); renderSelOperador();
+    return S.operadores;
+  });
+}
+
+function renderSelOperador(){
+  var sel = $('#selOperador');
+  var ativos = S.operadores.filter(function(o){ return o.status==='ATIVO'; });
+  sel.innerHTML = '<option value="">selecionar…</option>' + ativos.map(function(o){
+    return '<option value="'+esc(o.nome)+'"'+(S.operador===o.nome?' selected':'')+'>'+esc(o.nome)+'</option>';
+  }).join('');
+  sel.value = S.operador || '';
+  sel.parentNode.classList.toggle('vazio', !S.operador);
+  var oc = document.getElementById('operadorScan');
+  if(oc) oc.textContent = S.operador || 'não identificado';
+}
+
+function renderOperadores(){
+  var tb = $('#tblOper').querySelector('tbody');
+  if(!S.operadores.length){
+    tb.innerHTML = '<tr><td colspan="4"><div class="empty">Nenhum operador cadastrado. Cadastre quem trabalha na expedição para que cada ação fique identificada.</div></td></tr>';
+    return;
+  }
+  tb.innerHTML = S.operadores.map(function(o){
+    return '<tr'+(o.status==='ATIVO'?'':' class="excluida"')+'>'+
+      '<td><b>'+esc(o.nome)+'</b>'+(S.operador===o.nome?' <span class="tag ok">em uso</span>':'')+'</td>'+
+      '<td>'+(o.status==='ATIVO'?'<span class="tag ok">Ativo</span>':'<span class="tag idle">Inativo</span>')+'</td>'+
+      '<td class="hint">'+esc(ddmmyyyy(o.criadoEm))+'</td>'+
+      '<td><button class="btn sm" data-oper="'+esc(o.id)+'">'+(o.status==='ATIVO'?'Inativar':'Reativar')+'</button></td>'+
+    '</tr>';
+  }).join('');
+  tb.querySelectorAll('[data-oper]').forEach(function(b){
+    b.onclick = function(){ alternarOperador(b.getAttribute('data-oper')); };
+  });
+}
+
+function addOperador(nome){
+  nome = (nome||'').trim().slice(0,40);
+  if(!nome) return;
+  if(S.operadores.some(function(o){ return o.nome.toLowerCase()===nome.toLowerCase(); })){
+    toast('Já existe um operador com esse nome.'); return;
+  }
+  S.operadores.push({ id:'o'+Date.now().toString(36), nome:nome, status:'ATIVO', criadoEm:nowISO() });
+  Store.saveOperadores(S.operadores).then(function(){
+    renderOperadores(); renderSelOperador();
+    if(!S.operador) selecionarOperador(nome);
+    toast('Operador cadastrado.');
+  });
+}
+
+function alternarOperador(id){
+  S.operadores = S.operadores.map(function(o){
+    return o.id===id ? Object.assign({}, o, { status: o.status==='ATIVO' ? 'INATIVO' : 'ATIVO' }) : o;
+  });
+  var alvo = S.operadores.filter(function(o){ return o.id===id; })[0];
+  if(alvo && alvo.status==='INATIVO' && S.operador===alvo.nome) selecionarOperador('');
+  Store.saveOperadores(S.operadores).then(function(){ renderOperadores(); renderSelOperador(); });
+}
+
+function selecionarOperador(nome){
+  S.operador = nome || '';
+  S.usuario = S.operador || S.usuario;
+  localStorage.setItem('rom.operador', S.operador);
+  renderSelOperador(); renderOperadores();
+}
+
+// Toda ação sensível passa por aqui.
+function exigirOperador(acao){
+  if(S.operador) return true;
+  toast('Identifique o operador no topo da tela antes de ' + acao + '.');
+  var sel = $('#selOperador');
+  if(sel){ sel.focus(); }
+  if(!S.operadores.length) setView('oper');
+  return false;
+}
+
+/* =====================================================================
+   ÍNDICE DE BIPAGENS DE ROMANEIOS ANTERIORES
+   Somente bipagens ATIVAS entram: uma bipagem excluída logicamente não
+   conta como bipagem anterior válida.
+   ===================================================================== */
+function construirIndiceHistorico(){
+  var alvos = S.lista.filter(function(m){
+    return !m.excluido && (!S.romaneio || m.id !== S.romaneio.id);
+  }).slice(0,12);
+  var idx = {};
+  return Promise.all(alvos.map(function(m){
+    return Promise.all([Store.loadOrders(m.id), Store.loadEvents(m.id)]).then(function(par){
+      var ords = par[0]||[], evs = par[1]||[];
+      var ativas = E.bipagensAtivasPorPedido(evs);
+      ords.forEach(function(o){
+        var b = ativas[o.id];
+        if(!b || !b.length) return;
+        var primeira = b.slice().sort(function(a,c){ return a.ts<c.ts?-1:1; })[0];
+        (o.keys||[]).forEach(function(k){
+          if(k.type==='ANY') return;
+          var kk = k.type+':'+k.value;
+          if(!idx[kk]) idx[kk] = {
+            romaneioId:m.id, romaneio:m.nome, data:m.dataReferencia||ddmmyyyy(m.criadoEm),
+            ts:primeira.ts, operador:primeira.operador||primeira.estacao||'—',
+            nf:o.nfRaw||o.nf, pedido:o.pedido
+          };
+        });
+      });
+    }).catch(function(){});
+  })).then(function(){ S.histIndex = idx; });
+}
+
+function consultarRomaneioAnterior(order){
+  if(!order) return null;
+  var achado = null;
+  (order.keys||[]).some(function(k){
+    if(k.type==='ANY') return false;
+    var hit = S.histIndex[k.type+':'+k.value];
+    if(hit){ achado = hit; return true; }
+    return false;
+  });
+  return achado;
+}
+
+/* =====================================================================
+   EXCLUSÃO LÓGICA DE UMA BIPAGEM
+   ===================================================================== */
+function pedirExclusaoBipagem(evId){
+  if(!S.romaneio) return;
+  if(estaFechado()){ avisoFechado('excluir bipagens'); return; }
+  if(!exigirOperador('excluir uma bipagem')) return;
+  var ev = S.events.filter(function(e){ return e.id===evId; })[0];
+  if(!ev || ev.excluida) return;
+  var o = ev.orderId ? S.orders.filter(function(x){ return x.id===ev.orderId; })[0] : null;
+  var outras = S.events.filter(function(e){
+    return !e.excluida && e.id!==evId && e.orderId && e.orderId===ev.orderId && e.status==='OK';
+  }).length;
+
+  var corpo = '<p style="margin:0">Excluir apenas esta ocorrência de bipagem. O pedido continua no romaneio.</p>'+
+    '<dl class="kv" style="margin:12px 0">'+
+      (o ? '<dt>NF</dt><dd>'+esc(o.nfRaw||o.nf)+'</dd><dt>Pedido</dt><dd>'+esc(o.pedido||'—')+'</dd><dt>Cliente</dt><dd>'+esc(o.cliente)+'</dd>' : '')+
+      '<dt>Código lido</dt><dd>'+esc(ev.code)+'</dd>'+
+      '<dt>Bipado em</dt><dd>'+esc(ddmmyyyy(ev.ts)+' '+hhmmss(ev.ts))+'</dd>'+
+      '<dt>Operador</dt><dd>'+esc(ev.operador||ev.estacao||'—')+'</dd>'+
+    '</dl>'+
+    '<div class="alert" style="margin:0 0 10px">'+(outras
+      ? 'Existe mais '+outras+' bipagem ativa deste pedido: ele continuará <b>EMBALADO</b>.'
+      : 'Esta é a única bipagem ativa deste pedido: ele voltará para <b>PENDENTE</b>.')+'</div>'+
+    '<label class="hint" style="display:block">Motivo (opcional)'+
+    '<input id="modalMotivo" placeholder="ex.: leitor disparou duas vezes" style="width:100%;margin-top:5px;border:1px solid var(--line-2);background:var(--panel);border-radius:3px;padding:7px 9px"></label>';
+
+  modal({
+    titulo:'Excluir bipagem', corpo:corpo, confirmar:'Excluir bipagem',
+    onOk: function(){
+      var m = document.getElementById('modalMotivo');
+      excluirBipagem(evId, m ? m.value.trim() : '');
+    },
+    guardarMotivo:true
+  });
+}
+
+function excluirBipagem(evId, motivo){
+  var ev = S.events.filter(function(e){ return e.id===evId; })[0];
+  if(!ev) return;
+  var rid = S.romaneio.id, sessao = ev.docId, ts = nowISO();
+  var o = ev.orderId ? S.orders.filter(function(x){ return x.id===ev.orderId; })[0] : null;
+
+  var atualizar = function(e){
+    return e.id===evId ? Object.assign({}, e, {
+      excluida:true, excluidaEm:ts, excluidaPor:S.operador, motivoExclusao:motivo||''
+    }) : e;
+  };
+  var itensDaSessao = S.events.filter(function(e){ return e.docId===sessao; }).map(atualizar);
+
+  Store.saveEventsOf(rid, sessao, ev.estacao||'', itensDaSessao).then(function(){
+    S.events = S.events.map(atualizar);
+    S.meus = S.meus.map(atualizar);
+    recalcular();
+    var linha = S.rec.linhas.filter(function(l){ return o && l.order.id===o.id; })[0];
+    registrarAuditoria('EXCLUSAO_BIPAGEM',
+      'Bipagem de ' + esc(ev.code) + ' excluída' + (motivo ? ' · motivo: ' + motivo : ''),
+      { pedido:(o?o.pedido:''), nf:(o?(o.nfRaw||o.nf):''), romaneio:S.romaneio.nome,
+        antes:'EMBALADO', depois:(linha?linha.status:''), ref:evId });
+    toast(linha && linha.status==='EMBALADO'
+      ? 'Bipagem excluída. O pedido continua EMBALADO por outra bipagem ativa.'
+      : 'Bipagem excluída. O pedido voltou para PENDENTE.');
+  }).catch(function(){ toast('Não foi possível excluir a bipagem.'); });
+}
+
+/* =====================================================================
+   EXCLUSÃO LÓGICA DE UMA IMPORTAÇÃO
+   ===================================================================== */
+function avisoFechado(acao){
+  modal({
+    titulo:'🔒 Romaneio fechado',
+    corpo:'<p style="margin:0">Este romaneio está fechado e não pode ser alterado, então não é possível '+esc(acao)+'.</p>'+
+      '<p class="hint">Para seguir, reabra o romaneio. A reabertura e a alteração ficam registradas na auditoria.</p>',
+    confirmar:'Reabrir romaneio', cancelar:'Voltar',
+    onOk: abrirReabertura
+  });
+}
+
+function pedirExclusaoImportacao(numero){
+  if(!S.romaneio) return;
+  if(estaFechado()){ avisoFechado('excluir uma importação'); return; }
+  if(!exigirOperador('excluir uma importação')) return;
+  var imp = S.importacoes.filter(function(i){ return i.numero===numero; })[0];
+  if(!imp || imp.status==='EXCLUIDA') return;
+  var ativasDepois = S.importacoes.filter(function(i){
+    return i.status!=='EXCLUIDA' && i.numero!==numero;
+  }).map(function(i){ return i.numero; });
+  var pv = E.previaExclusaoImportacao(S.ordersAll, numero, ativasDepois, S.events);
+
+  var corpo = '<dl class="kv" style="margin:0 0 4px">'+
+      '<dt>Arquivo</dt><dd>'+esc(imp.arquivo||'—')+'</dd>'+
+      '<dt>Data</dt><dd>'+esc(ddmmyyyy(imp.ts))+'</dd>'+
+      '<dt>Horário</dt><dd>'+esc(hhmmss(imp.ts))+'</dd>'+
+      '<dt>Pedidos no arquivo</dt><dd>'+imp.encontrados+'</dd>'+
+      '<dt>Novos pedidos adicionados</dt><dd>'+imp.novos+'</dd>'+
+    '</dl>'+
+    '<div class="nums">'+
+      '<div><div class="n">'+pv.permanecem+'</div><div class="l">Permanecem (estão em outra importação)</div></div>'+
+      '<div><div class="n">'+pv.sairiam+'</div><div class="l">Saem do romaneio ativo</div></div>'+
+      '<div><div class="n" style="color:var(--ok)">'+pv.bipados+'</div><div class="l">Já bipados</div></div>'+
+      '<div><div class="n">'+pv.naoBipados+'</div><div class="l">Não bipados</div></div>'+
+    '</div>'+
+    '<p class="hint" style="margin:0">Os pedidos que existem exclusivamente nesta importação poderão ser removidos do romaneio consolidado. Pedidos que também estejam presentes em outras importações permanecem.</p>';
+
+  if(pv.bipados){
+    corpo += '<div class="alert" style="margin:12px 0 0"><b>⚠️ Atenção</b>'+
+      'Esta importação possui pedidos que já foram bipados. Nenhuma bipagem é apagada: '+
+      (pv.paraRevisao ? pv.paraRevisao+' pedido(s) bipado(s) ficarão marcados para revisão por terem perdido a importação de origem.' : 'todos eles continuam no romaneio por outra importação.')+
+      '</div>';
+  }
+  corpo += '<p style="margin:12px 0 0"><b>Tem certeza que deseja excluir esta importação?</b></p>';
+
+  modal({
+    titulo:'Excluir importação #'+numero+'?', corpo:corpo, confirmar:'🗑️ Excluir importação',
+    onOk: function(){ excluirImportacao(numero, ativasDepois, pv); }
+  });
+}
+
+function excluirImportacao(numero, ativasDepois, pv){
+  var rid = S.romaneio.id, ts = nowISO();
+  var imp = S.importacoes.filter(function(i){ return i.numero===numero; })[0];
+  var res = E.recalcularAtivos(S.ordersAll, ativasDepois, S.events);
+  var impExcluida = Object.assign({}, imp, {
+    status:'EXCLUIDA', excluidaEm:ts, excluidaPor:S.operador,
+    removidos:res.removidos.length, permaneceram:pv.permanecem, bipados:pv.bipados
+  });
+
+  Store.saveOrders(rid, res.orders).then(function(){
+    return Store.updateImportacao(rid, impExcluida);
+  }).then(function(){
+    return Store.updateMeta(rid, {
+      totalPedidos: res.ativos.length, qtdImportacoes: ativasDepois.length, atualizadoEm: ts
+    });
+  }).then(function(){
+    S.importacoes = S.importacoes.map(function(i){ return i.numero===numero ? impExcluida : i; });
+    S.ordersAll = res.orders;
+    S.orders = res.ativos;
+    S.idx = E.buildIndex(S.orders);
+    if(S.romaneio){ S.romaneio.totalPedidos = res.ativos.length; S.romaneio.qtdImportacoes = ativasDepois.length; }
+    S.lista.forEach(function(m){ if(m.id===rid){ m.totalPedidos = res.ativos.length; m.qtdImportacoes = ativasDepois.length; } });
+    recalcular();
+    renderImportacoes();
+    registrarAuditoria('EXCLUSAO_IMPORTACAO',
+      'Importação #'+numero+' ('+(imp.arquivo||'')+', de '+ddmmyyyy(imp.ts)+' '+hhmmss(imp.ts)+') excluída. '+
+      imp.encontrados+' pedidos no arquivo, '+imp.novos+' eram novos. '+
+      res.removidos.length+' pedido(s) saíram do romaneio, '+pv.permanecem+' permaneceram por estarem em outra importação, '+
+      pv.bipados+' já haviam sido bipados.',
+      { romaneio:S.romaneio.nome, antes:'ATIVA', depois:'EXCLUÍDA' });
+    if(res.revisao.length){
+      registrarAuditoria('REVISAO',
+        res.revisao.length+' pedido(s) bipado(s) ficaram sem importação de origem e estão marcados para revisão: '+
+        res.revisao.map(function(o){ return 'NF '+(o.nfRaw||o.nf); }).join(', '),
+        { romaneio:S.romaneio.nome });
+    }
+    renderTudo();
+    toast('Importação #'+numero+' excluída. Romaneio recalculado: '+res.ativos.length+' pedidos ativos.');
+  }).catch(function(err){
+    toast('Não foi possível excluir a importação: ' + (err && err.message || err));
+  });
+}
+
+/* =====================================================================
+   EXCLUSÃO LÓGICA DO ROMANEIO
+   ===================================================================== */
+function auditarEm(romId, tipo, detalhe, extra){
+  if(S.romaneio && S.romaneio.id===romId) return registrarAuditoria(tipo, detalhe, extra);
+  return Store.listAudit(romId).then(function(l){
+    var meus = (l||[]).filter(function(a){ return String(a.id).indexOf(docId)===0; });
+    meus.push(Object.assign({
+      id: docId+'-a'+Date.now().toString(36), ts: nowISO(), tipo:tipo, detalhe:detalhe||'',
+      usuario: S.operador||'', estacao: S.estacao||''
+    }, extra||{}));
+    return Store.saveAudit(romId, meus);
+  }).catch(function(){});
+}
+
+function pedirExclusaoRomaneio(id){
+  var m = S.lista.filter(function(x){ return x.id===id; })[0];
+  if(!m) return;
+  if(!exigirOperador('excluir um romaneio')) return;
+  var r = m.resumo||{};
+  var corpo = '<p style="margin:0"><b>Tem certeza que deseja excluir este romaneio?</b> Essa ação afeta todo o conjunto de importações e registros relacionados.</p>'+
+    '<dl class="kv" style="margin:12px 0">'+
+      '<dt>Romaneio</dt><dd>'+esc(m.nome)+'</dd>'+
+      '<dt>Data</dt><dd>'+esc(m.dataReferencia||ddmmyyyy(m.criadoEm))+'</dd>'+
+      '<dt>Status</dt><dd>'+(m.status==='FECHADO'?'🔒 Fechado':'🟢 Aberto')+'</dd>'+
+      '<dt>Pedidos</dt><dd>'+(m.totalPedidos||0)+'</dd>'+
+      '<dt>Bipados</dt><dd>'+(r.embalados||0)+'</dd>'+
+      '<dt>Importações</dt><dd>'+(m.qtdImportacoes||1)+'</dd>'+
+    '</dl>'+
+    '<p class="hint" style="margin:0">Excluir é diferente de fechar: o romaneio sai da lista do histórico, mas nada é apagado do banco. Os registros continuam acessíveis pelo filtro de auditoria "mostrar excluídos".</p>'+
+    '<label class="check"><input type="checkbox" id="modalCheck"><span>Entendo que o romaneio sairá da lista operacional e que esta exclusão fica registrada em meu nome ('+esc(S.operador)+').</span></label>';
+  modal({
+    titulo:'Excluir romaneio', corpo:corpo, confirmar:'🗑️ Excluir romaneio', exigeCheck:true,
+    onOk: function(){ excluirRomaneio(id); }
+  });
+}
+
+function excluirRomaneio(id){
+  var ts = nowISO();
+  var patch = { excluido:true, excluidoEm:ts, excluidoPor:S.operador, atualizadoEm:ts };
+  Store.updateMeta(id, patch).then(function(){
+    S.lista.forEach(function(m){ if(m.id===id) Object.assign(m, patch); });
+    return auditarEm(id, 'EXCLUSAO_ROMANEIO', 'Romaneio excluído logicamente (permanece no banco para auditoria)',
+      { antes:'VISÍVEL', depois:'EXCLUÍDO' });
+  }).then(function(){
+    if(S.romaneio && S.romaneio.id===id){
+      if(S.unsub){ try{ S.unsub(); }catch(e){} S.unsub=null; }
+      S.romaneio=null; S.orders=[]; S.ordersAll=[]; S.events=[]; S.meus=[];
+      S.importacoes=[]; S.auditoria=[]; S.rec=null;
+      localStorage.removeItem('rom.aberto');
+      recalcular();
+    }
+    renderTudo();
+    toast('Romaneio excluído. Ele continua disponível no filtro de auditoria.');
+  });
+}
+
+/* =====================================================================
+   NAVEGAÇÃO / INICIALIZAÇÃO
+   ===================================================================== */
+var TITULOS = { import:'Importar romaneio', scan:'Expedição / Bipagem', concil:'Conciliação', hist:'Histórico de romaneios', oper:'Operadores' };
+function setView(v){
+  S.view = v;
+  ['import','scan','concil','hist','oper'].forEach(function(k){
+    $('#view-'+k).classList.toggle('hidden', k!==v);
+  });
+  $$('#nav button').forEach(function(b){ b.setAttribute('aria-current', String(b.getAttribute('data-view')===v)); });
+  $('#viewTitle').textContent = TITULOS[v];
+  if(v==='concil'){ renderConciliacao(); renderImportacoes(); renderAuditoria(); }
+  if(v==='hist') renderHistorico();
+  if(v==='oper') renderOperadores();
+  if(v==='scan') focoScan();
+}
+function renderTudo(){ renderDashboard(); renderFeed(); renderOcorrencias(); renderImportacoes(); renderAuditoria(); renderHistorico(); if(S.view==='concil') renderConciliacao(); }
+
+function focoScan(){
+  if(S.view!=='scan') return;
+  var el = $('#scanInput');
+  if(document.activeElement !== el) el.focus();
+}
+
+function pedirEstacao(forcar){
+  if(S.estacao && !forcar) return;
+  var v = prompt('Nome desta estação de expedição (aparece em cada bipagem):', S.estacao || 'Expedição 1');
+  if(v && v.trim()){
+    S.estacao = v.trim().slice(0,40);
+    localStorage.setItem('rom.estacao', S.estacao);
+    $('#estacaoNome').textContent = S.estacao;
+  }
+}
+
+function pedirUsuario(forcar){
+  if(S.usuario && !forcar) return;
+  var v = prompt('Nome do responsável (fica registrado nas importações, fechamentos e reaberturas):', S.usuario || S.estacao || '');
+  if(v && v.trim()){
+    S.usuario = v.trim().slice(0,40);
+    localStorage.setItem('rom.usuario', S.usuario);
+    $('#usuarioNome').textContent = S.usuario;
+  }
+}
+
+function aplicarTema(){
+  var t = S.tema;
+  if(t==='auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+  $('#btnTema').textContent = t === 'auto' ? 'auto' : (t==='dark'?'escuro':'claro');
+}
+
+/* eventos de UI */
+$$('#nav button').forEach(function(b){ b.onclick = function(){ setView(b.getAttribute('data-view')); }; });
+$('#btnPick').onclick = function(){ $('#file').click(); };
+$('#file').onchange = function(e){ if(e.target.files[0]) lerArquivo(e.target.files[0]); };
+var drop = $('#drop');
+['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('hot'); }); });
+['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('hot'); }); });
+drop.addEventListener('drop', function(e){ if(e.dataTransfer.files[0]) lerArquivo(e.dataTransfer.files[0]); });
+
+$('#scanInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    var v = e.target.value;
+    e.target.value = '';
+    processarBipagem(v);
+  }
+  if(e.key === 'Escape'){ e.target.value=''; }
+});
+document.addEventListener('click', function(e){
+  if(S.view!=='scan') return;
+  if(e.target.closest('input,select,button,textarea,a')) return;
+  focoScan();
+});
+setInterval(focoScan, 1500);
+
+['#fStatus','#fTexto','#fTransp','#fServ','#fData','#fHoraDe','#fHoraAte'].forEach(function(s){
+  $(s).addEventListener('input', renderConciliacao);
+  $(s).addEventListener('change', renderConciliacao);
+});
+$('#btnLimparF').onclick = function(){
+  ['#fStatus','#fTexto','#fTransp','#fServ','#fData','#fHoraDe','#fHoraAte'].forEach(function(s){ $(s).value=''; });
+  renderConciliacao();
+};
+$('#btnExport').onclick = exportar;
+$('#btnCopiarPend').onclick = copiarPendentes;
+$('#btnReload').onclick = function(){ carregarLista().then(function(){ toast('Lista atualizada.'); }); };
+$('#btnFechar').onclick = abrirFechamento;
+$('#btnReabrir').onclick = abrirReabertura;
+$('#btnUsuario').onclick = function(){ pedirUsuario(true); };
+$('#selOperador').onchange = function(){ selecionarOperador($('#selOperador').value); };
+$('#btnAddOperador').onclick = function(){ addOperador($('#novoOperador').value); $('#novoOperador').value=''; };
+$('#novoOperador').addEventListener('keydown', function(e){
+  if(e.key==='Enter'){ e.preventDefault(); addOperador(e.target.value); e.target.value=''; }
+});
+['#hDe','#hAte','#hStatus','#hOper','#hBusca','#hExcluidos'].forEach(function(sel){
+  $(sel).addEventListener('input', renderHistorico);
+  $(sel).addEventListener('change', renderHistorico);
+});
+$('#btnLimparH').onclick = function(){
+  ['#hDe','#hAte','#hStatus','#hOper','#hBusca'].forEach(function(sel){ $(sel).value=''; });
+  $('#hExcluidos').checked = false;
+  renderHistorico();
+};
+$('#btnEstacao').onclick = function(){ pedirEstacao(true); };
+$('#btnSom').onclick = function(){
+  S.som = !S.som; localStorage.setItem('rom.som', S.som?'1':'0');
+  $('#btnSom').textContent = S.som ? 'ligado' : 'desligado';
+  if(S.som) beep('ok');
+};
+$('#btnTema').onclick = function(){
+  S.tema = S.tema==='auto' ? 'light' : S.tema==='light' ? 'dark' : 'auto';
+  localStorage.setItem('rom.tema', S.tema); aplicarTema();
+};
+document.addEventListener('keydown', function(e){
+  if(e.key==='F2'){ e.preventDefault(); setView('scan'); }
+  if(e.key==='F3'){ e.preventDefault(); setView('concil'); }
+});
+
+/* arranque */
+$('#btnSom').textContent = S.som ? 'ligado' : 'desligado';
+$('#estacaoNome').textContent = S.estacao || '—';
+$('#usuarioNome').textContent = S.usuario || '—';
+aplicarTema();
+renderDashboard();
+setView('import');
+
+Store.init().then(function(mode){
+  var pill = $('#storePill');
+  pill.className = 'pill ' + (mode==='db' ? 'on' : 'off');
+  pill.innerHTML = '<i></i><span>' + (mode==='db'
+    ? 'Dados compartilhados entre as estações'
+    : 'Dados salvos apenas neste navegador') + '</span>';
+  if(!S.estacao) pedirEstacao(false);
+  return carregarOperadores().then(carregarLista);
+}).then(function(){
+  construirIndiceHistorico();
+  var aberto = localStorage.getItem('rom.aberto');
+  var existe = S.lista.filter(function(m){ return m.id===aberto && !m.excluido; })[0];
+  if(existe) return abrirRomaneio(aberto).then(function(){ setView('scan'); });
+  if(S.lista.length) setView('hist');
+});
+
+window.addEventListener('beforeunload', function(){ if(writer.dirty) flushSave(); });
+})();
+</script>
+</body>
+</html>

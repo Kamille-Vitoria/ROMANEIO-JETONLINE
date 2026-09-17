@@ -1,0 +1,12 @@
+{
+  "name": "romaneio-jetonline-tests",
+  "private": true,
+  "description": "Testes de integração do sistema de romaneio (rodam contra o index.html gerado)",
+  "scripts": {
+    "test": "node test.js && node e2e.js && node test-fechamento.js && node test-exclusoes.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0",
+    "xlsx": "^0.18.5"
+  }
+}
